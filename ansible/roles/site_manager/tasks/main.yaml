@@ -6,12 +6,14 @@
     - services:
         site-manager:
           image: ghcr.io/mattcen/site-manager:latest
-          # ports:
+          ports:
+            - "2022:2022"
+            - "2023:2023"
           #   - "8000:80"
           networks:
             - proxy
           deploy:
-            replicas: 2
+            replicas: 1
             restart_policy:
               delay: 10s
               max_attempts: 10
