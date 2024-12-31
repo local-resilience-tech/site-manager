@@ -1,0 +1,8 @@
+---
+- hosts:
+    - cloud.sites.merri-bek.tech
+  roles:
+    - docker_swarm_manager
+    - traefik
+    - watchtower
+    - site_manager

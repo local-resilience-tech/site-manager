@@ -1,0 +1,70 @@
+- name: Ensure Docker proxy network exists
+  community.docker.docker_network:
+    name: proxy
+    attachable: true
+    driver: overlay
+    scope: swarm
+
+- name: Ensure Traefik stack is configured
+  community.docker.docker_stack:
+    state: present
+    name: traefik
+    compose:
+    - services:
+        traefik:
+          logging:
+            options:
+              max-size: "1m"
+          image: traefik:3.2
+          networks:
+            - proxy
+          volumes:
+            - acme:/etc/traefik/acme
+            - /var/run/docker.sock:/var/run/docker.sock
+          ports:
+            - "80:80"
+            - "443:443"
+          command:
+            #- --accesslog=true
+            # Possible log levels: DEBUG, INFO, WARN, ERROR (default), FATAL, PANIC
+            #- --log.level=INFO
+            # Use your favourite settings here, but add:
+            - --providers.swarm.network=proxy
+            - --providers.swarm.watch
+            - --providers.swarm.exposedByDefault=false
+            # By default a traefiek-enabled service can be accessed at
+            # https://stackName.TOP_DOMAIN (where TOP_DOMAIN is specified at
+            # the proxy stack's create time, or set to 'localhost' by default.
+            - --providers.swarm.defaultRule=Host(`{{ '{{' }} index .Labels "com.docker.stack.namespace" {{ '}}' }}.site-manager.merri-bek.tech`)
+            - --api
+            - --entryPoints.web.address=:80
+            - --entryPoints.websecure.address=:443
+            - --entrypoints.websecure.http.tls=true
+            - --entrypoints.web.http.redirections.entryPoint.to=websecure # force HTTPS
+            - --entrypoints.websecure.http.tls.certresolver=default
+            ## optional LetsEncrypt settings
+            - --certificatesResolvers.default.acme.email={{ traefik_acme_email }}
+            - --certificatesResolvers.default.acme.storage=/etc/traefik/acme/acme.json
+            - --certificatesResolvers.default.acme.tlsChallenge=true
+            - --certificatesResolvers.default.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+            - --certificatesResolvers.default.acme.caServer=https://acme-v02.api.letsencrypt.org/directory
+
+          deploy:
+            placement:
+              constraints: [node.role == manager]
+            # Dynamic Configuration
+            labels:
+              #traefik.enable: "true"
+              #traefik.http.routers.api.rule: Host(`traefik.${TOP_DOMAIN:-localhost}`)
+              traefik.http.routers.api.rule: Host(`{{ inventory_hostname }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+              traefik.http.routers.api.entryPoints: websecure
+              traefik.http.routers.api.service: api@internal
+              traefik.http.routers.api.middlewares: auth
+              traefik.http.services.traefik-traefik.loadbalancer.server.port: 4242
+              # echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
+              #traefik.http.middlewares.auth.basicauth.users: 'mbt:$$INVALID
+      volumes:
+        acme:
+      networks:
+        proxy:
+          external: true

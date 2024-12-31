@@ -1,0 +1,12 @@
+all:
+  vars:
+    ansible_become: true
+  hosts:
+    #localhost:
+    #  ansible_connection: ansible.builtin.local
+    #  gather_facts: false
+    #  ansible_become: false
+    cloud.sites.merri-bek.tech:
+      ansible_ssh_user: root
+      ansible_become: false
+      traefik_acme_email: mattcen@mattcen.com
