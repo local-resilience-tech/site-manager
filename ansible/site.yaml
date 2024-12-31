@@ -4,5 +4,5 @@
   roles:
     - docker_swarm_manager
     - traefik
-    - watchtower
+    - shepherd
     - site_manager

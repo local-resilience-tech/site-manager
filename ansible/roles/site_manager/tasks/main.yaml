@@ -24,7 +24,7 @@
               traefik.http.routers.site-manager.entryPoints: websecure
               traefik.http.routers.site-manager.service: site-manager
               traefik.http.services.site-manager.loadbalancer.server.port: 8000
-              com.centurylinklabs.watchtower.enable: "true"
+              shepherd.enable: "true"
           # healthcheck:
           #   test: ["CMD", "curl", "-f", "http://localhost/"]
           #   interval: 30s
