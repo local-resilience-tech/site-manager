@@ -2,4 +2,4 @@ services:
   site-manager:
     image: resilientlocaltech/site-manager
     ports:
-      - "8000:80"
+      - "8000:8000"
