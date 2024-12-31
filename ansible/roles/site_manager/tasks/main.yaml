@@ -5,7 +5,7 @@
     compose:
     - services:
         site-manager:
-          image: ghcr.io/mattcen/site-manager:latest
+          image: ghcr.io/merri-bek-tech/site-manager:latest
           ports:
             - "2022:2022"
             - "2023:2023"
