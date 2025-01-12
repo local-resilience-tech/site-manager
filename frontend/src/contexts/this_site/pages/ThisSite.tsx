@@ -36,7 +36,7 @@ const getRegion = async (): Promise<RegionDetails | null> => {
   return null
 }
 
-export default function () {
+export default function ThisSite() {
   const [site, setSite] = useState<SiteDetails | null>(null)
   const [region, setRegion] = useState<RegionDetails | null>(null)
   const [step, setStep] = useState<SiteStep>(null)

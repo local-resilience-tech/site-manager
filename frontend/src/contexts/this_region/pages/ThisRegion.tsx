@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { RegionDetails } from "../types"
-import { Box } from "@chakra-ui/react"
+import { Box, Center, Container, Spinner } from "@chakra-ui/react"
 import ThisRegionApi from "../api"
+import FindRegion from "../components/FindRegion"
+import { NewRegionData } from "../components/NewRegion"
+import { ApiResult } from "../../shared/types"
 
 const api = new ThisRegionApi()
 
@@ -11,7 +14,7 @@ const getRegion = async (): Promise<RegionDetails | null> => {
   return null
 }
 
-export default function () {
+export default function ThisRegion() {
   const [region, setRegion] = useState<RegionDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -34,9 +37,33 @@ export default function () {
     })
   }
 
+  const onSubmitNewRegion = (data: NewRegionData) => {
+    api
+      .create(data.name, data.description)
+      .then((result: ApiResult<RegionDetails, any>) => {
+        if ("Ok" in result) updateRegion(result.Ok)
+      })
+  }
+
   useEffect(() => {
     fetchRegion()
   }, [])
 
-  return <Box>TODO: This Region</Box>
+  if (loading) {
+    return (
+      <Container maxWidth={"2xl"}>
+        <Center>
+          <Spinner size="lg" opacity={0.5} />
+        </Center>
+      </Container>
+    )
+  }
+
+  return (
+    <Container maxWidth={"2xl"}>
+      {region == null && (
+        <FindRegion onSubmitNewRegion={onSubmitNewRegion} />
+      )}
+    </Container>
+  )
 }
