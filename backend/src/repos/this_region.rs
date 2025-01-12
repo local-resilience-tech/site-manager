@@ -40,8 +40,7 @@ impl ThisRegionRepo {
             "
             SELECT regions.id, regions.name, regions.description
             FROM regions
-            INNER JOIN sites ON sites.region_id = regions.id
-            INNER JOIN site_configs ON site_configs.this_site_id = sites.id
+            INNER JOIN site_configs ON site_configs.this_region_id = regions.id
             WHERE site_configs.id = ?
             LIMIT 1
             ",
@@ -79,6 +78,11 @@ impl ThisRegionRepo {
         .execute(&mut ***db)
         .await
         .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
+
+        let _site_config = sqlx::query!("UPDATE site_configs SET this_region_id = ? WHERE id = ?", region_id, SITE_CONFIG_ID)
+            .execute(&mut ***db)
+            .await
+            .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
 
         self.set_region(db, region_id).await?;
 
