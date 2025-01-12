@@ -2,4 +2,6 @@ services:
   site-manager:
     image: resilientlocaltech/site-manager
     ports:
-      - "8000:80"
+      - "8000:8000"
+      - "2022:2022"
+      - "2023:2023"

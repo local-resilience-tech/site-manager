@@ -1,0 +1,36 @@
+- name: Ensure Site Manager stack is configured
+  community.docker.docker_stack:
+    state: present
+    name: site-manager
+    compose:
+    - services:
+        site-manager:
+          image: ghcr.io/local-resilience-tech/site-manager:latest
+          ports:
+            - "2022:2022/udp"
+            - "2023:2023/udp"
+          #   - "8000:80"
+          networks:
+            - proxy
+          deploy:
+            replicas: 1
+            restart_policy:
+              delay: 10s
+              max_attempts: 10
+              window: 60s
+            labels:
+              traefik.enable: "true"
+              traefik.http.routers.site-manager.rule: "Host(`{{ inventory_hostname }}`)"
+              traefik.http.routers.site-manager.entryPoints: websecure
+              traefik.http.routers.site-manager.service: site-manager
+              traefik.http.services.site-manager.loadbalancer.server.port: 8000
+              shepherd.enable: "true"
+          # healthcheck:
+          #   test: ["CMD", "curl", "-f", "http://localhost/"]
+          #   interval: 30s
+          #   timeout: 20s
+          #   retries: 3
+
+      networks:
+        proxy:
+          external: true

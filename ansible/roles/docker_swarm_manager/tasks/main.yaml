@@ -1,0 +1,18 @@
+---
+- name: Ensure apt cache is up to date
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Ensure Docker is installed
+  ansible.builtin.apt:
+    pkg:
+      - docker.io
+      - python3-docker
+      - python3-jsondiff
+
+# Ref https://docs.ansible.com/ansible/latest/collections/community/docker/docker_swarm_module.html#examples
+- name: Init a new swarm with default parameters
+  community.docker.docker_swarm:
+    state: present
+    #advertise_addr: 127.0.0.1
+    advertise_addr: eth1
