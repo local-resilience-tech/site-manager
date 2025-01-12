@@ -22,6 +22,23 @@ impl Fairing for P2PandaCommsFairing {
         if let Some(db) = MainDb::fetch(&rocket) {
             let repo = ThisP2PandaNodeRepo::init();
 
+            if let Some(container) = rocket.state::<P2PandaContainer>() {
+                match repo.get_network_name(db).await {
+                    Ok(network_name) => {
+                        println!("Got network name");
+
+                        if let Some(network_name) = network_name {
+                            container.set_network_name(network_name).await;
+                        }
+                    }
+                    Err(_) => {
+                        println!("Failed to get network name");
+                    }
+                }
+            } else {
+                println!("P2PandaContainer state not found.");
+            }
+
             match repo.get_or_create_private_key(db).await {
                 Ok(private_key) => {
                     println!("Got private key");

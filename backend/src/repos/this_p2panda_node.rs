@@ -21,6 +21,29 @@ impl ThisP2PandaNodeRepo {
         ThisP2PandaNodeRepo {}
     }
 
+    pub async fn get_network_name(&self, db: &MainDb) -> Result<Option<String>, ThisP2PandaNodeError> {
+        let mut connection = db.sqlite_pool().acquire().await.unwrap();
+
+        let result = sqlx::query!(
+            "
+            SELECT name
+            FROM regions
+            INNER JOIN site_configs ON regions.id = site_configs.this_region_id
+            WHERE site_configs.id = ?
+            LIMIT 1
+            ",
+            SITE_CONFIG_ID
+        )
+        .fetch_optional(&mut *connection)
+        .await
+        .map_err(|_| ThisP2PandaNodeError::InternalServerError("Database error".to_string()))?;
+
+        match result {
+            None => return Ok(None),
+            Some(result) => return Ok(Some(result.name)),
+        }
+    }
+
     pub async fn get_or_create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisP2PandaNodeError> {
         let private_key = self.get_private_key(db).await?;
 
