@@ -78,3 +78,25 @@ The, providing you have a docker swarm running, use:
 `docker stack deploy -c ./site-manager.yml site-manager`
 
 The app should then be running on post 8000 of your pi. We recommend using [swarmpit](https://swarmpit.io/) to monitor your swarm.
+
+# Database Handling
+
+The Backend uses an SQLite database. The rust integration uses a library called `sqlx` that handles queries and database migrations, and also performs compile time checking of SQL queries against the DB structure. There are some command-line tools to help out with this
+
+## SQLX Command Line Tools
+
+### Installing
+
+You'll need the following pre-requisites on linux:
+
+`sudo apt install pkg-config libssl-dev`
+
+Then install with `cargo install sqlx-cli`
+
+### Useful commands
+
+Re-create the database:
+`DATABASE_URL=sqlite:./main.sqlite cargo sqlx database reset`
+
+Re-build the query indexes:
+`DATABASE_URL=sqlite:./main.sqlite cargo sqlx prepare`
