@@ -34,10 +34,16 @@ impl TopicId for ChatTopic {
 
 #[derive(Default)]
 pub struct P2PandaContainer {
+    pub network_name: Arc<Mutex<Option<String>>>,
     pub network: Arc<Mutex<Option<Network<ChatTopic>>>>,
 }
 
 impl P2PandaContainer {
+    pub async fn set_network_name(&self, network_name: String) {
+        let mut network_name_lock = self.network_name.lock().await;
+        *network_name_lock = Some(network_name);
+    }
+
     pub async fn start(&self, private_key: PrivateKey) -> Result<()> {
         let mut sites = Sites::build();
 

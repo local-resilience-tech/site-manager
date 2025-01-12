@@ -1,5 +1,5 @@
 import { Text, Input, VStack } from "@chakra-ui/react"
-import { useForm, SubmitHandler } from "react-hook-form"
+import { useForm } from "react-hook-form"
 
 import { Field, Button, FormActions } from "../../../components"
 
