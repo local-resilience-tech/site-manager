@@ -7,8 +7,8 @@
         site-manager:
           image: ghcr.io/local-resilience-tech/site-manager:latest
           ports:
-            - "2022:2022"
-            - "2023:2023"
+            - "2022:2022/udp"
+            - "2023:2023/udp"
           #   - "8000:80"
           networks:
             - proxy

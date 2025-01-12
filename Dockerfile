@@ -35,7 +35,7 @@ ENV ROCKET_PORT=8000
 ENV ROCKET_FRONTEND_ASSET_PATH=/app/frontend
 ENV DATABASE_URL=sqlite:/app/site-manager.db
 EXPOSE 8000
-EXPOSE 2022
-EXPOSE 2023
+EXPOSE 2022/udp
+EXPOSE 2023/udp
 WORKDIR /app/backend
 CMD ["./site-manager"]

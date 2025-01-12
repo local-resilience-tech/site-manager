@@ -3,5 +3,5 @@ services:
     image: resilientlocaltech/site-manager
     ports:
       - "8000:8000"
-      - "2022:2022"
-      - "2023:2023"
+      - "2022:2022/udp"
+      - "2023:2023/udp"
