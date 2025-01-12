@@ -14,7 +14,7 @@ const getRegion = async (): Promise<RegionDetails | null> => {
   return null
 }
 
-export default function ThisRegion() {
+export default function EnsureRegion({ children }: { children: React.ReactNode }) {
   const [region, setRegion] = useState<RegionDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -64,6 +64,7 @@ export default function ThisRegion() {
       {region == null && (
         <FindRegion onSubmitNewRegion={onSubmitNewRegion} />
       )}
+      {region != null && children}
     </Container>
   )
 }

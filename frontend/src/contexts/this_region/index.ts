@@ -1,1 +1,1 @@
-export { default as ThisRegion } from "./pages/ThisRegion"
+export { default as EnsureRegion } from "./pages/EnsureRegion"
