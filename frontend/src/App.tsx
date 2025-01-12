@@ -5,6 +5,7 @@ import { ColorModeProvider } from "./components/ui/color-mode"
 import { InstalledApps } from "./contexts/apps"
 import { themeSystem } from "./theme"
 import { ThisSite, ThisNode } from "./contexts/this_site"
+import { ThisRegion } from "./contexts/this_region"
 
 const router = createBrowserRouter(
   [
@@ -12,7 +13,7 @@ const router = createBrowserRouter(
       path: "/",
       element: <Layout />,
       children: [
-        { path: "", element: <ThisSite /> },
+        { path: "", element: <ThisRegion /> },
         { path: "node", element: <ThisNode /> },
         { path: "apps", element: <InstalledApps /> },
       ],

@@ -8,7 +8,7 @@ import ThisSiteApi from "../api"
 import { ApiResult } from "../../shared/types"
 import { NewRegionData } from "../components/NewRegion"
 
-type SiteStep = null | "set_name" | "find_bioregion" | "done"
+type SiteStep = null | "set_name" | "find_region" | "done"
 
 function getStep(
   site: SiteDetails | null,
@@ -17,7 +17,7 @@ function getStep(
   if (!site) {
     return "set_name"
   } else if (!region) {
-    return "find_bioregion"
+    return "find_region"
   }
   return "done"
 }
@@ -115,7 +115,7 @@ export default function () {
   return (
     <Container maxWidth={"2xl"}>
       {step == "set_name" && <NewSite onSubmitNewSite={onSubmitNewSite} />}
-      {step == "find_bioregion" && site && (
+      {step == "find_region" && site && (
         <FindRegion site={site} onSubmitNewRegion={onSubmitNewRegion} />
       )}
       {step == "done" && (

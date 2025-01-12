@@ -11,9 +11,18 @@ use crate::repos::this_region::{CreateRegionData, ThisRegionError, ThisRegionRep
 async fn create(mut db: Connection<MainDb>, data: Json<CreateRegionData>) -> Result<Json<Region>, ThisRegionError> {
     let repo = ThisRegionRepo::init();
 
-    repo.create_region(&mut db, data.into_inner())
+
+    let result = repo.create_region(&mut db, data.into_inner())
         .await
         .map(|region| Json(region))
+
+    // if result ok
+
+    if let Ok(region) = &result {
+        // Set the region on the P2Panda node
+    }
+
+    result
 }
 
 #[get("/", format = "json")]
