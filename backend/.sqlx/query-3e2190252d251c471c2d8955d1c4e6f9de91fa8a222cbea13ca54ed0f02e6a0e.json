@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE site_configs SET this_region_id = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3e2190252d251c471c2d8955d1c4e6f9de91fa8a222cbea13ca54ed0f02e6a0e"
+}

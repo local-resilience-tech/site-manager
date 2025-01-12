@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT regions.id, regions.name, regions.description\n            FROM regions\n            INNER JOIN sites ON sites.region_id = regions.id\n            INNER JOIN site_configs ON site_configs.this_site_id = sites.id\n            WHERE site_configs.id = ?\n            LIMIT 1\n            ",
+  "query": "\n            SELECT regions.id, regions.name, regions.description\n            FROM regions\n            INNER JOIN site_configs ON site_configs.this_region_id = regions.id\n            WHERE site_configs.id = ?\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -28,5 +28,5 @@
       true
     ]
   },
-  "hash": "f32dd2ba954368cb32f37d5d241db40309b886321782e6c3c73abdde5839ca7d"
+  "hash": "6aa84529baedca4a7b2f6b78ed971088a46a657b7c61c3abb8aa56bcbf8fffc8"
 }
