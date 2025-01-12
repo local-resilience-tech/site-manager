@@ -1,2 +1,4 @@
 node_modules
 backend/*.sqlite
+backend/main.sqlite-shm
+backend/main.sqlite-wal
