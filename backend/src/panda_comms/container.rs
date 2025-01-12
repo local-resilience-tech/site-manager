@@ -34,7 +34,8 @@ impl TopicId for ChatTopic {
 
 #[derive(Default)]
 pub struct P2PandaContainer {
-    pub network_name: Arc<Mutex<Option<String>>>,
+    network_name: Arc<Mutex<Option<String>>>,
+    private_key: Arc<Mutex<Option<PrivateKey>>>,
     pub network: Arc<Mutex<Option<Network<ChatTopic>>>>,
 }
 
@@ -44,7 +45,22 @@ impl P2PandaContainer {
         *network_name_lock = Some(network_name);
     }
 
-    pub async fn start(&self, private_key: PrivateKey) -> Result<()> {
+    pub async fn get_network_name(&self) -> Option<String> {
+        let network_name_lock = self.network_name.lock().await;
+        network_name_lock.clone().or(None)
+    }
+
+    pub async fn set_private_key(&self, private_key: PrivateKey) {
+        let mut private_key_lock = self.private_key.lock().await;
+        *private_key_lock = Some(private_key);
+    }
+
+    pub async fn get_private_key(&self) -> Option<PrivateKey> {
+        let private_key_lock = self.private_key.lock().await;
+        private_key_lock.clone().or(None)
+    }
+
+    pub async fn start(&self) -> Result<()> {
         let mut sites = Sites::build();
 
         println!("P2Panda: starting up");
@@ -52,8 +68,15 @@ impl P2PandaContainer {
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
 
-        let network_slug = "merri-bek.tech";
-        let network_id: NetworkId = Hash::new(network_slug).into();
+        let private_key: Option<PrivateKey> = self.get_private_key().await;
+        let network_name: Option<String> = self.get_network_name().await;
+
+        // if we don't have a private key or network name, we can't start
+        if private_key.is_none() || network_name.is_none() {
+            return Ok(());
+        }
+
+        let network_id: NetworkId = Hash::new(network_name.unwrap()).into();
 
         let topic = ChatTopic::new("site_management");
 
@@ -71,14 +94,14 @@ impl P2PandaContainer {
             }
         });
 
+        let key = private_key.unwrap();
+
         // spawn a task to announce the site every 30 seconds
         tokio::task::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
-                announce_site(&private_key, &site_name, &tx)
-                    .await
-                    .ok();
+                announce_site(&key, &site_name, &tx).await.ok();
             }
         });
 

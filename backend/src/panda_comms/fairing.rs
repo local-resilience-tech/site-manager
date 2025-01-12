@@ -35,25 +35,22 @@ impl Fairing for P2PandaCommsFairing {
                         println!("Failed to get network name");
                     }
                 }
-            } else {
-                println!("P2PandaContainer state not found.");
-            }
 
-            match repo.get_or_create_private_key(db).await {
-                Ok(private_key) => {
-                    println!("Got private key");
-
-                    if let Some(container) = rocket.state::<P2PandaContainer>() {
-                        if let Err(e) = container.start(private_key).await {
-                            println!("Failed to start P2PandaContainer: {:?}", e);
-                        }
-                    } else {
-                        println!("P2PandaContainer state not found.");
+                match repo.get_or_create_private_key(db).await {
+                    Ok(private_key) => {
+                        println!("Got private key");
+                        container.set_private_key(private_key).await;
+                    }
+                    Err(_) => {
+                        println!("Failed to get private key");
                     }
                 }
-                Err(_) => {
-                    println!("Failed to get private key");
+
+                if let Err(e) = container.start().await {
+                    println!("Failed to start P2PandaContainer: {:?}", e);
                 }
+            } else {
+                println!("P2PandaContainer state not found.");
             }
         } else {
             println!("MainDb state not found, wont start Panda node");
