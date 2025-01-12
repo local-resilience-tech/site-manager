@@ -25,6 +25,11 @@ async fn create(
         panda_container
             .set_network_name(region.name.clone())
             .await;
+
+        // start the container
+        if let Err(e) = panda_container.start().await {
+            println!("Failed to start P2PandaContainer: {:?}", e);
+        }
     }
 
     result

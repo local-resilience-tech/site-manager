@@ -63,18 +63,23 @@ impl P2PandaContainer {
     pub async fn start(&self) -> Result<()> {
         let mut sites = Sites::build();
 
-        println!("P2Panda: starting up");
-
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
 
         let private_key: Option<PrivateKey> = self.get_private_key().await;
         let network_name: Option<String> = self.get_network_name().await;
 
-        // if we don't have a private key or network name, we can't start
-        if private_key.is_none() || network_name.is_none() {
+        if private_key.is_none() {
+            println!("P2Panda: No private key found, not starting network");
             return Ok(());
         }
+
+        if network_name.is_none() {
+            println!("P2Panda: No network name found, not starting network");
+            return Ok(());
+        }
+
+        println!("P2Panda: Starting network");
 
         let network_id: NetworkId = Hash::new(network_name.unwrap()).into();
 

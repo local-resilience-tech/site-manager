@@ -25,9 +25,8 @@ impl Fairing for P2PandaCommsFairing {
             if let Some(container) = rocket.state::<P2PandaContainer>() {
                 match repo.get_network_name(db).await {
                     Ok(network_name) => {
-                        println!("Got network name");
-
                         if let Some(network_name) = network_name {
+                            println!("Got network name: {:?}", network_name);
                             container.set_network_name(network_name).await;
                         }
                     }
