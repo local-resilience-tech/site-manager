@@ -9,9 +9,10 @@
           ports:
             - "2022:2022/udp"
             - "2023:2023/udp"
-          #   - "8000:80"
-          networks:
-            - proxy
+            - "80:80"
+          network_mode: "host"
+          # networks:
+          #   - proxy
           deploy:
             replicas: 1
             restart_policy:
@@ -31,6 +32,6 @@
           #   timeout: 20s
           #   retries: 3
 
-      networks:
-        proxy:
-          external: true
+      # networks:
+      #   proxy:
+      #     external: true
