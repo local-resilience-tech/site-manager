@@ -142,6 +142,12 @@ impl P2PandaContainer {
         let node_addr = endpoint.node_addr().await.unwrap();
         node_addr
     }
+
+    pub async fn known_peers(&self) -> Result<Vec<NodeAddr>> {
+        let network = self.network.lock().await;
+        let network = network.as_ref().unwrap();
+        return network.known_peers().await;
+    }
 }
 
 fn get_site_name() -> String {

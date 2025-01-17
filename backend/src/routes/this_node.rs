@@ -31,6 +31,16 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
         iroh_node_addr: node_addr,
     };
 
+    let peers = panda_container.known_peers().await;
+    match peers {
+        Ok(peers) => {
+            println!("Got peers: {:?}", peers);
+        }
+        Err(e) => {
+            println!("Error fetching peers: {}", e)
+        }
+    }
+
     Ok(Json(dummy_details))
 }
 
