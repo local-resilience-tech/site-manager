@@ -46,7 +46,7 @@ impl Fairing for P2PandaCommsFairing {
                 }
 
                 if let Err(e) = container.start().await {
-                    println!("Failed to start P2PandaContainer: {:?}", e);
+                    println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
                 }
             } else {
                 println!("P2PandaContainer state not found.");

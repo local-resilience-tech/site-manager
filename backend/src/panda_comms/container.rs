@@ -1,12 +1,14 @@
 use anyhow::Result;
 use gethostname::gethostname;
 use iroh_net::NodeAddr;
-use p2panda_core::{Hash, PrivateKey};
+use p2panda_core::identity::PUBLIC_KEY_LEN;
+use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, ToNetwork, TopicId};
 use p2panda_sync::TopicQuery;
 use rocket::tokio;
 use serde::{Deserialize, Serialize};
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -79,15 +81,24 @@ impl P2PandaContainer {
             return Ok(());
         }
 
-        println!("P2Panda: Starting network");
+        let private_key = private_key.unwrap();
+        let network_name = network_name.unwrap();
 
-        let network_id: NetworkId = Hash::new(network_name.unwrap()).into();
+        println!("P2Panda: Starting network: {}", network_name);
+
+        let network_id: NetworkId = Hash::new(network_name).into();
 
         let topic = ChatTopic::new("site_management");
+
+        // Bootstrap node details
+        let node_id = build_public_key_from_hex("1ba0fb6f87d51f836b3adc955b3e890eedfbd1942b3ff97d8f70a8284007fd2b".to_string()).unwrap();
+        let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(170, 64, 151, 138), 2022));
+        let addresses: Vec<SocketAddr> = vec![addr];
 
         let network: Network<ChatTopic> = NetworkBuilder::new(network_id)
             .discovery(LocalDiscovery::new()?)
             .discovery(ManualDiscovery::new()?)
+            .direct_address(node_id, addresses, None)
             .build()
             .await?;
 
@@ -99,14 +110,14 @@ impl P2PandaContainer {
             }
         });
 
-        let key = private_key.unwrap();
-
         // spawn a task to announce the site every 30 seconds
         tokio::task::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
-                announce_site(&key, &site_name, &tx).await.ok();
+                announce_site(&private_key, &site_name, &tx)
+                    .await
+                    .ok();
             }
         });
 
@@ -171,4 +182,16 @@ async fn announce_site(private_key: &PrivateKey, name: &str, tx: &tokio::sync::m
     })
     .await?;
     Ok(())
+}
+
+// TODO: This should be in p2panda-core, submit a PR
+fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
+    let key_bytes = hex::decode(key_hex).ok()?;
+    let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes.try_into().ok()?;
+    let result = PublicKey::from_bytes(&key_byte_array);
+
+    match result {
+        Ok(key) => Some(key),
+        Err(_) => None,
+    }
 }
