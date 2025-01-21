@@ -91,7 +91,7 @@ impl P2PandaContainer {
         let topic = ChatTopic::new("site_management");
 
         // Bootstrap node details
-        let node_id = build_public_key_from_hex("1ba0fb6f87d51f836b3adc955b3e890eedfbd1942b3ff97d8f70a8284007fd2b".to_string()).unwrap();
+        let node_id = build_public_key_from_hex("073912eccc459a93f71b998373097d6e6bdd96ccffdab9be4d3da6ac6358030a".to_string()).unwrap();
         let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(170, 64, 151, 138), 2022));
         let addresses: Vec<SocketAddr> = vec![addr];
 
