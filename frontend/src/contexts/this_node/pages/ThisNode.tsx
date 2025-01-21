@@ -1,9 +1,9 @@
 import { VStack, Text, Table, Box } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
-import ThisSiteApi from "../api"
+import ThisNodeApi from "../api"
 import { NodeDetails } from "../types"
 
-const api = new ThisSiteApi()
+const api = new ThisNodeApi()
 
 const getNode = async (): Promise<NodeDetails | null> => {
   const result = await api.showNode()

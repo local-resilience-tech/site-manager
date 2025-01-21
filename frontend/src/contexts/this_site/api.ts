@@ -24,8 +24,4 @@ export default class ThisSiteApi extends BaseApi {
       description,
     })
   }
-
-  showNode(): Promise<ApiResult<any, any>> {
-    return this.apiCall("this_node")
-  }
 }

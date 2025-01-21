@@ -4,7 +4,8 @@ import { ChakraProvider } from "@chakra-ui/react"
 import { ColorModeProvider } from "./components/ui/color-mode"
 import { InstalledApps } from "./contexts/apps"
 import { themeSystem } from "./theme"
-import { EnsureSite, ThisNode } from "./contexts/this_site"
+import { EnsureSite } from "./contexts/this_site"
+import { ThisNode } from "./contexts/this_node"
 import { EnsureRegion } from "./contexts/this_region"
 
 const router = createBrowserRouter(
@@ -13,7 +14,14 @@ const router = createBrowserRouter(
       path: "/",
       element: <Layout />,
       children: [
-        { path: "", element: <EnsureRegion><EnsureSite /></EnsureRegion> },
+        {
+          path: "",
+          element: (
+            <EnsureRegion>
+              <EnsureSite />
+            </EnsureRegion>
+          ),
+        },
         { path: "node", element: <ThisNode /> },
         { path: "apps", element: <InstalledApps /> },
       ],
