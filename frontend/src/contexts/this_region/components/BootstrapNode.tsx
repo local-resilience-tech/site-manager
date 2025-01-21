@@ -7,7 +7,13 @@ export interface BootstrapNodeData {
   public_ip: string
 }
 
-export default function BootstrapNode() {
+export type SubmitBootstrapNodeFunc = (data: BootstrapNodeData) => void
+
+export default function BootstrapNode({
+  onSubmit,
+}: {
+  onSubmit: SubmitBootstrapNodeFunc
+}) {
   const {
     register,
     handleSubmit,
@@ -15,7 +21,7 @@ export default function BootstrapNode() {
   } = useForm<BootstrapNodeData>()
 
   return (
-    <form onSubmit={handleSubmit((data) => console.log(data))}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <Text as="p" mb={4}>
         TODO: We don't yet provide much feedback on whether you put in the
         correct details here, please type carefully.

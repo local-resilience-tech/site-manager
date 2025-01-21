@@ -38,6 +38,19 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
     Ok(Json(node_details))
 }
 
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct BootstrapNodeData {
+    node_id: String,
+    ip_address: String,
+}
+
+#[post("/bootstrap", format = "json", data = "<data>")]
+async fn bootstrap(data: Json<BootstrapNodeData>) -> Result<(), ThisNodeError> {
+    println!("Bootstrapping to node: {:?} , {:?}, ", data.node_id, data.ip_address);
+    Ok(())
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![show]
+    routes![show, bootstrap]
 }
