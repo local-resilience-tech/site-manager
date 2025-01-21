@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { RegionDetails } from "../types"
 import { Box, Center, Container, Spinner } from "@chakra-ui/react"
 import ThisRegionApi from "../api"
-import FindRegion from "../components/FindRegion"
+import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
 
@@ -62,7 +62,7 @@ export default function EnsureRegion({ children }: { children: React.ReactNode }
   return (
     <Container maxWidth={"2xl"}>
       {region == null && (
-        <FindRegion onSubmitNewRegion={onSubmitNewRegion} />
+        <SetRegion onSubmitNewRegion={onSubmitNewRegion} />
       )}
       {region != null && children}
     </Container>
