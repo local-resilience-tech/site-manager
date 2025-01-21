@@ -53,6 +53,14 @@ export default function ThisNode() {
               </Box>
             </Table.Cell>
           </Table.Row>
+          <Table.Row>
+            <Table.Cell>Peers</Table.Cell>
+            <Table.Cell>
+              <Box maxW={"md"}>
+                <pre>{JSON.stringify(node.peers, null, 2)}</pre>
+              </Box>
+            </Table.Cell>
+          </Table.Row>
         </Table.Body>
       </Table.Root>
     </VStack>
