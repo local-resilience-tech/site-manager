@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 
 export interface BootstrapNodeData {
   node_id: string
-  public_ip: string
+  ip_address: string
 }
 
 export type SubmitBootstrapNodeFunc = (data: BootstrapNodeData) => void
@@ -46,11 +46,11 @@ export default function BootstrapNode({
         <Field
           label="Public IP Address"
           helperText={`An IPv4 address that can be used to communicate with the node above`}
-          invalid={!!errors.public_ip}
-          errorText={errors.public_ip?.message}
+          invalid={!!errors.ip_address}
+          errorText={errors.ip_address?.message}
         >
           <Input
-            {...register("public_ip", {
+            {...register("ip_address", {
               required: "This is required",
               pattern: {
                 value: /^(\d{1,3}\.){3}\d{1,3}$/,

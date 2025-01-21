@@ -1,9 +1,8 @@
 import { Box, Text } from "@chakra-ui/react"
-import { BootstrapNode, BootstrapNodeData } from "../../this_node"
+import { BootstrapNode, BootstrapNodeData, ThisNodeApi } from "../../this_node"
 import { useState } from "react"
-import ThisRegionApi from "../api"
 
-const api = new ThisRegionApi()
+const nodeApi = new ThisNodeApi()
 
 export default function ExistingRegion() {
   const [bootstrapData, setBootstrapData] = useState<BootstrapNodeData | null>(
@@ -11,6 +10,9 @@ export default function ExistingRegion() {
   )
 
   const onSubmitBootstrapNode = (data: BootstrapNodeData) => {
+    nodeApi.bootstrap(data.node_id, data.ip_address)
+
+    // temp
     setBootstrapData(data)
   }
 
