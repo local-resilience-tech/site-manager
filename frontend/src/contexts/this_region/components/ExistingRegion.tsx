@@ -1,5 +1,5 @@
 import { Box, Text } from "@chakra-ui/react"
-import BootstrapNode, { BootstrapNodeData } from "./BootstrapNode"
+import { BootstrapNode, BootstrapNodeData } from "../../this_node"
 import { useState } from "react"
 import ThisRegionApi from "../api"
 
