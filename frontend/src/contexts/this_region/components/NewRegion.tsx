@@ -1,5 +1,5 @@
 import { Input, Textarea } from "@chakra-ui/react"
-import { useForm, SubmitHandler } from "react-hook-form"
+import { useForm } from "react-hook-form"
 
 import { Field, FormActions, Button, FormFields } from "../../../components"
 
