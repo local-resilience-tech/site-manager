@@ -6,7 +6,7 @@ use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, ToNetwork, TopicId};
 use p2panda_sync::TopicQuery;
-use rocket::tokio;
+use rocket::{local, tokio};
 use serde::{Deserialize, Serialize};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::Arc;
@@ -96,7 +96,7 @@ impl P2PandaContainer {
         let addresses: Vec<SocketAddr> = vec![addr];
 
         let network: Network<ChatTopic> = NetworkBuilder::new(network_id)
-            .discovery(LocalDiscovery::new()?)
+            .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?)
             .direct_address(node_id, addresses, None)
             .build()
