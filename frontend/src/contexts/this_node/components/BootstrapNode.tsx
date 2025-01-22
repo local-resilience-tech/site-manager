@@ -58,8 +58,8 @@ export default function BootstrapNode({
             {...register("node_id", {
               required: "This is required",
               maxLength: {
-                value: 50,
-                message: "Must be less than 50 characters",
+                value: 64,
+                message: "Must be no more than 64 characters",
               },
             })}
           />

@@ -8,7 +8,7 @@ use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, ToNetwork, To
 use p2panda_sync::TopicQuery;
 use rocket::tokio;
 use serde::{Deserialize, Serialize};
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -67,6 +67,13 @@ impl P2PandaContainer {
         private_key_lock.clone().or(None)
     }
 
+    pub fn build_direct_address(&self, node_id_hex: String, ip4_address: String) -> Result<DirectAddress, anyhow::Error> {
+        let node_id = build_public_key_from_hex(node_id_hex).ok_or(anyhow::Error::msg("Invalid node id"))?;
+        let addr = SocketAddr::V4(SocketAddrV4::new(ip4_address.parse()?, 2022));
+        let addresses: Vec<SocketAddr> = vec![addr];
+        Ok(DirectAddress { node_id, addresses })
+    }
+
     pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
         let mut sites = Sites::build();
 
@@ -101,6 +108,7 @@ impl P2PandaContainer {
         // let addresses: Vec<SocketAddr> = vec![addr];
 
         let mut builder = NetworkBuilder::new(network_id)
+            .private_key(private_key.clone())
             .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?);
 

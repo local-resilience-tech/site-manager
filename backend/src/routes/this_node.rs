@@ -65,8 +65,12 @@ async fn bootstrap(
         .set_network_name(data.network_name.clone())
         .await;
 
+    let direct_address = panda_container
+        .build_direct_address(data.node_id.clone(), data.ip_address.clone())
+        .map_err(|e| ThisNodeError::InternalServerError(e.to_string()))?;
+
     // start the container
-    if let Err(e) = panda_container.start(None).await {
+    if let Err(e) = panda_container.start(Some(direct_address)).await {
         println!("Failed to start P2PandaContainer: {:?}", e);
     }
 
