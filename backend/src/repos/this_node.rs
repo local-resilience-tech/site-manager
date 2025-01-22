@@ -1,6 +1,9 @@
 use crate::{
     infra::db::MainDb,
-    repos::{entities::PrivateKeyRow, helpers::SITE_CONFIG_ID},
+    repos::{
+        entities::PrivateKeyRow,
+        helpers::{NETWORK_CONFIG_ID, SITE_CONFIG_ID},
+    },
 };
 use hex;
 use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
@@ -28,11 +31,11 @@ impl ThisNodeRepo {
         let result = sqlx::query!(
             "
             SELECT network_name
-            FROM site_configs
-            WHERE site_configs.id = ?
+            FROM network_configs
+            WHERE network_configs.id = ?
             LIMIT 1
             ",
-            SITE_CONFIG_ID
+            NETWORK_CONFIG_ID
         )
         .fetch_optional(&mut *connection)
         .await
@@ -47,12 +50,12 @@ impl ThisNodeRepo {
     pub async fn set_network_name(&self, db: &mut Connection<MainDb>, network_name: String) -> Result<(), ThisNodeError> {
         let _region = sqlx::query!(
             "
-            UPDATE site_configs
+            UPDATE network_configs
             SET network_name = ?
-            WHERE site_configs.id = ?
+            WHERE network_configs.id = ?
             ",
             network_name,
-            SITE_CONFIG_ID
+            NETWORK_CONFIG_ID
         )
         .execute(&mut ***db)
         .await;

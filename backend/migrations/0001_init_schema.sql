@@ -12,6 +12,11 @@ CREATE TABLE sites (
     FOREIGN KEY (region_id) REFERENCES regions(id)
 );
 
+CREATE TABLE network_configs (
+    id INT PRIMARY KEY NOT NULL,
+    network_name VARCHAR(255)
+);
+
 CREATE TABLE site_configs (
     id INT PRIMARY KEY NOT NULL,
     network_name VARCHAR(255),

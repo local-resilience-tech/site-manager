@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE site_configs\n            SET this_region_id = ?, network_name = ?\n            WHERE id = ?\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "d3ab7f427c1eb0f11151d497aa121f2ff7f675f386f46aafab56eb5f9bb350a7"
+}

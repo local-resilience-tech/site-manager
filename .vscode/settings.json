@@ -14,7 +14,8 @@
     "**/.factorypath": true,
     "backend/target": true,
     "frontend/dist": true,
-    "node_modules": true
+    "node_modules": true,
+    "backend/.sqlx": true
   },
   "explorerExclude.backup": {},
   "rust-analyzer.cargo.sysroot": "discover",
