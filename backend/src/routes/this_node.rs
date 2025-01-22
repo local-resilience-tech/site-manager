@@ -2,9 +2,11 @@ use iroh_net::NodeAddr;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::{Route, State};
-use thiserror::Error;
+use rocket_db_pools::Connection;
 
+use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
+use crate::repos::this_node::{ThisNodeError, ThisNodeRepo};
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -13,9 +15,6 @@ pub struct NodeDetails {
     pub iroh_node_addr: NodeAddr,
     pub peers: Vec<NodeAddr>,
 }
-
-#[derive(Debug, Error, Responder)]
-pub enum ThisNodeError {}
 
 #[get("/", format = "json")]
 async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDetails>, ThisNodeError> {
@@ -47,11 +46,30 @@ pub struct BootstrapNodeData {
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]
-async fn bootstrap(data: Json<BootstrapNodeData>) -> Result<(), ThisNodeError> {
+async fn bootstrap(
+    mut db: Connection<MainDb>,
+    data: Json<BootstrapNodeData>,
+    panda_container: &State<P2PandaContainer>,
+) -> Result<(), ThisNodeError> {
     println!(
         "Bootstrapping to node: {:?}, {:?} , {:?}, ",
         data.network_name, data.node_id, data.ip_address
     );
+
+    let repo = ThisNodeRepo::init();
+
+    repo.set_network_name(&mut db, data.network_name.clone())
+        .await?;
+
+    panda_container
+        .set_network_name(data.network_name.clone())
+        .await;
+
+    // start the container
+    if let Err(e) = panda_container.start(None).await {
+        println!("Failed to start P2PandaContainer: {:?}", e);
+    }
+
     Ok(())
 }
 

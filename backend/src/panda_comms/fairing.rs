@@ -4,7 +4,7 @@ use rocket_db_pools::Database;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
-use crate::repos::this_p2panda_node::ThisP2PandaNodeRepo;
+use crate::repos::this_node::ThisNodeRepo;
 
 #[derive(Default)]
 pub struct P2PandaCommsFairing {}
@@ -20,7 +20,7 @@ impl Fairing for P2PandaCommsFairing {
 
     async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
         if let Some(db) = MainDb::fetch(&rocket) {
-            let repo = ThisP2PandaNodeRepo::init();
+            let repo = ThisNodeRepo::init();
 
             if let Some(container) = rocket.state::<P2PandaContainer>() {
                 match repo.get_network_name(db).await {
