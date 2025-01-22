@@ -27,7 +27,7 @@ async fn create(
             .await;
 
         // start the container
-        if let Err(e) = panda_container.start().await {
+        if let Err(e) = panda_container.start(None).await {
             println!("Failed to start P2PandaContainer: {:?}", e);
         }
     }

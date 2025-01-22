@@ -6,7 +6,7 @@ use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, ToNetwork, TopicId};
 use p2panda_sync::TopicQuery;
-use rocket::{local, tokio};
+use rocket::tokio;
 use serde::{Deserialize, Serialize};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::Arc;
@@ -19,6 +19,11 @@ use crate::panda_comms::sites::Sites;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct ChatTopic(String, [u8; 32]);
+
+pub struct DirectAddress {
+    pub node_id: PublicKey,
+    pub addresses: Vec<SocketAddr>,
+}
 
 impl ChatTopic {
     pub fn new(name: &str) -> Self {
@@ -62,7 +67,7 @@ impl P2PandaContainer {
         private_key_lock.clone().or(None)
     }
 
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
         let mut sites = Sites::build();
 
         let site_name = get_site_name();
@@ -91,16 +96,20 @@ impl P2PandaContainer {
         let topic = ChatTopic::new("site_management");
 
         // Bootstrap node details
-        let node_id = build_public_key_from_hex("073912eccc459a93f71b998373097d6e6bdd96ccffdab9be4d3da6ac6358030a".to_string()).unwrap();
-        let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(170, 64, 151, 138), 2022));
-        let addresses: Vec<SocketAddr> = vec![addr];
+        // let node_id = build_public_key_from_hex("073912eccc459a93f71b998373097d6e6bdd96ccffdab9be4d3da6ac6358030a".to_string()).unwrap();
+        // let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(170, 64, 151, 138), 2022));
+        // let addresses: Vec<SocketAddr> = vec![addr];
 
-        let network: Network<ChatTopic> = NetworkBuilder::new(network_id)
+        let mut builder = NetworkBuilder::new(network_id)
             .discovery(LocalDiscovery::new())
-            .discovery(ManualDiscovery::new()?)
-            .direct_address(node_id, addresses, None)
-            .build()
-            .await?;
+            .discovery(ManualDiscovery::new()?);
+
+        if let Some(direct_address) = direct_address {
+            let DirectAddress { node_id, addresses } = direct_address;
+            builder = builder.direct_address(node_id, addresses, None);
+        }
+
+        let network: Network<ChatTopic> = builder.build().await?;
 
         let (tx, mut rx, _ready) = network.subscribe(topic).await?;
 
