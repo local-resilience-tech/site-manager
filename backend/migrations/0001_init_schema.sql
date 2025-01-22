@@ -19,7 +19,6 @@ CREATE TABLE network_configs (
 
 CREATE TABLE site_configs (
     id INT PRIMARY KEY NOT NULL,
-    network_name VARCHAR(255),
     this_site_id VARCHAR(36),
     this_region_id VARCHAR(36),
     private_key_hex VARCHAR(64),

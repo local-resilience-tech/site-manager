@@ -1,5 +1,8 @@
 use super::entities::Region;
-use crate::{infra::db::MainDb, repos::helpers::SITE_CONFIG_ID};
+use crate::{
+    infra::db::MainDb,
+    repos::helpers::{NETWORK_CONFIG_ID, SITE_CONFIG_ID},
+};
 use rocket::serde::Deserialize;
 use rocket_db_pools::Connection;
 use thiserror::Error;
@@ -98,15 +101,27 @@ impl ThisRegionRepo {
     }
 
     async fn set_region_on_config(&self, db: &mut Connection<MainDb>, region_id: String, network_name: String) -> Result<(), ThisRegionError> {
-        let _site_config = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE site_configs
-            SET this_region_id = ?, network_name = ?
+            SET this_region_id = ?
             WHERE id = ?
             ",
             region_id,
-            network_name,
             SITE_CONFIG_ID
+        )
+        .execute(&mut ***db)
+        .await
+        .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
+
+        sqlx::query!(
+            "
+            UPDATE network_configs
+            SET network_name = ?
+            WHERE network_configs.id = ?
+            ",
+            network_name,
+            NETWORK_CONFIG_ID
         )
         .execute(&mut ***db)
         .await

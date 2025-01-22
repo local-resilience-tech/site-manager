@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT network_name\n            FROM site_configs\n            WHERE site_configs.id = ?\n            LIMIT 1\n            ",
+  "query": "\n            SELECT network_name\n            FROM network_configs\n            WHERE network_configs.id = ?\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       true
     ]
   },
-  "hash": "682c3caf321de1459b0a3068278cf5d9671225743361c6b54542c885cfc1f1b8"
+  "hash": "b5c378a3f2026a9aa40d43736f4ca9c1fd4a1f40497ec3f0324444b7bb0b19b1"
 }
