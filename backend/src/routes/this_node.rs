@@ -58,7 +58,7 @@ async fn bootstrap(
 
     let repo = ThisNodeRepo::init();
 
-    repo.set_network_name(&mut db, data.network_name.clone())
+    repo.set_network_config(&mut db, data.network_name.clone(), data.node_id.clone(), data.ip_address.clone())
         .await?;
 
     panda_container

@@ -14,7 +14,9 @@ CREATE TABLE sites (
 
 CREATE TABLE network_configs (
     id INT PRIMARY KEY NOT NULL,
-    network_name VARCHAR(255)
+    network_name VARCHAR(255),
+    bootstrap_node_id VARCHAR(64),
+    bootstrap_node_ip4 VARCHAR(15)
 );
 
 CREATE TABLE site_configs (

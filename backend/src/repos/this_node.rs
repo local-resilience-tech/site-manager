@@ -47,14 +47,22 @@ impl ThisNodeRepo {
         }
     }
 
-    pub async fn set_network_name(&self, db: &mut Connection<MainDb>, network_name: String) -> Result<(), ThisNodeError> {
+    pub async fn set_network_config(
+        &self,
+        db: &mut Connection<MainDb>,
+        network_name: String,
+        bootstrap_node_id: String,
+        bootstrap_node_ip4: String,
+    ) -> Result<(), ThisNodeError> {
         let _region = sqlx::query!(
             "
             UPDATE network_configs
-            SET network_name = ?
+            SET network_name = ?, bootstrap_node_id = ?, bootstrap_node_ip4 = ?
             WHERE network_configs.id = ?
             ",
             network_name,
+            bootstrap_node_id,
+            bootstrap_node_ip4,
             NETWORK_CONFIG_ID
         )
         .execute(&mut ***db)
