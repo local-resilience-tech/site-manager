@@ -67,7 +67,7 @@ impl ThisRegionRepo {
 
         let region: Region = self.create_region(db, data).await?;
 
-        self.set_region_on_config(db, region.id.clone())
+        self.set_region_on_config(db, region.id.clone(), region.name.clone())
             .await?;
 
         println!("Created region");
@@ -97,11 +97,20 @@ impl ThisRegionRepo {
         });
     }
 
-    async fn set_region_on_config(&self, db: &mut Connection<MainDb>, region_id: String) -> Result<(), ThisRegionError> {
-        let _site_config = sqlx::query!("UPDATE site_configs SET this_region_id = ? WHERE id = ?", region_id, SITE_CONFIG_ID)
-            .execute(&mut ***db)
-            .await
-            .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
+    async fn set_region_on_config(&self, db: &mut Connection<MainDb>, region_id: String, network_name: String) -> Result<(), ThisRegionError> {
+        let _site_config = sqlx::query!(
+            "
+            UPDATE site_configs
+            SET this_region_id = ?, network_name = ?
+            WHERE id = ?
+            ",
+            region_id,
+            network_name,
+            SITE_CONFIG_ID
+        )
+        .execute(&mut ***db)
+        .await
+        .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
 
         return Ok(());
     }
