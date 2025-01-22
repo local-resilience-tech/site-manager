@@ -10,7 +10,7 @@ export default function ExistingRegion() {
   )
 
   const onSubmitBootstrapNode = (data: BootstrapNodeData) => {
-    nodeApi.bootstrap(data.node_id, data.ip_address)
+    nodeApi.bootstrap(data.network_name, data.node_id, data.ip_address)
 
     // temp
     setBootstrapData(data)

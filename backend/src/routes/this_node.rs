@@ -41,13 +41,17 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct BootstrapNodeData {
+    network_name: String,
     node_id: String,
     ip_address: String,
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]
 async fn bootstrap(data: Json<BootstrapNodeData>) -> Result<(), ThisNodeError> {
-    println!("Bootstrapping to node: {:?} , {:?}, ", data.node_id, data.ip_address);
+    println!(
+        "Bootstrapping to node: {:?}, {:?} , {:?}, ",
+        data.network_name, data.node_id, data.ip_address
+    );
     Ok(())
 }
 

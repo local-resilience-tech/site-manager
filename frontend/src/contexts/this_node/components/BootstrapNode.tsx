@@ -3,6 +3,7 @@ import { Field, FormActions, Button, FormFields } from "../../../components"
 import { useForm } from "react-hook-form"
 
 export interface BootstrapNodeData {
+  network_name: string
   node_id: string
   ip_address: string
 }
@@ -27,6 +28,26 @@ export default function BootstrapNode({
         correct details here, please type carefully.
       </Text>
       <FormFields>
+        <Field
+          label="Region Name"
+          helperText={`A unique string that defines this region`}
+          invalid={!!errors.network_name}
+          errorText={errors.network_name?.message}
+        >
+          <Input
+            {...register("network_name", {
+              required: "This is required",
+              maxLength: {
+                value: 50,
+                message: "Must be less than 50 characters",
+              },
+              pattern: {
+                value: /^[a-z]+(-[a-z]+)*$/,
+                message: "Lowercase letters only, no spaces, hyphens allowed",
+              },
+            })}
+          />
+        </Field>
         <Field
           label="Node ID"
           helperText={`A hex string that identifies another node in this network`}

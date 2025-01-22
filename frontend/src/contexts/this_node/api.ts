@@ -6,8 +6,13 @@ export default class ThisNodeApi extends BaseApi {
     return this.apiCall("this_node")
   }
 
-  bootstrap(node_id: string, ip_address: string): Promise<ApiResult<any, any>> {
+  bootstrap(
+    network_name: string,
+    node_id: string,
+    ip_address: string,
+  ): Promise<ApiResult<any, any>> {
     return this.apiCall("this_node/bootstrap", "POST", {
+      network_name,
       node_id,
       ip_address,
     })
