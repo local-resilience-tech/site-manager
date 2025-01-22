@@ -56,7 +56,7 @@ impl ThisRegionRepo {
         return Ok(region);
     }
 
-    pub async fn create_region(&self, db: &mut Connection<MainDb>, data: CreateRegionData) -> Result<Region, ThisRegionError> {
+    pub async fn create_this_region(&self, db: &mut Connection<MainDb>, data: CreateRegionData) -> Result<Region, ThisRegionError> {
         let existing = self.get_region(db).await;
 
         if existing.is_ok() {
@@ -65,6 +65,17 @@ impl ThisRegionRepo {
             return Err(ThisRegionError::CannotCreate("Region already exists".to_string()));
         }
 
+        let region: Region = self.create_region(db, data).await?;
+
+        self.set_region_on_config(db, region.id.clone())
+            .await?;
+
+        println!("Created region");
+
+        return self.get_region(db).await;
+    }
+
+    async fn create_region(&self, db: &mut Connection<MainDb>, data: CreateRegionData) -> Result<Region, ThisRegionError> {
         println!("Creating region");
 
         let region_id = Uuid::new_v4().to_string();
@@ -79,30 +90,18 @@ impl ThisRegionRepo {
         .await
         .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
 
+        return Ok(Region {
+            id: region_id,
+            name: data.name,
+            description: Some(data.description),
+        });
+    }
+
+    async fn set_region_on_config(&self, db: &mut Connection<MainDb>, region_id: String) -> Result<(), ThisRegionError> {
         let _site_config = sqlx::query!("UPDATE site_configs SET this_region_id = ? WHERE id = ?", region_id, SITE_CONFIG_ID)
             .execute(&mut ***db)
             .await
             .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
-
-        self.set_region(db, region_id).await?;
-
-        println!("Created region");
-
-        return self.get_region(db).await;
-    }
-
-    async fn set_region(&self, db: &mut Connection<MainDb>, region_id: String) -> Result<(), ThisRegionError> {
-        let _site = sqlx::query!(
-            "
-            UPDATE sites
-            SET region_id = ?
-            WHERE sites.id = (SELECT this_site_id FROM site_configs WHERE id = ?)",
-            region_id,
-            SITE_CONFIG_ID
-        )
-        .execute(&mut ***db)
-        .await
-        .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
 
         return Ok(());
     }

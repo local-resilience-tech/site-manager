@@ -17,7 +17,7 @@ async fn create(
     let repo = ThisRegionRepo::init();
 
     let result = repo
-        .create_region(&mut db, data.into_inner())
+        .create_this_region(&mut db, data.into_inner())
         .await
         .map(|region| Json(region));
 
