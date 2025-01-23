@@ -24,9 +24,9 @@ export default function EnsureRegion({
   const [networkId, setNetworkId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const updateRegion = (newRegion: RegionDetails | null) => {
-    console.log("Updating region", newRegion)
-    setNetworkId(newRegion?.network_id || null)
+  const updateNetworkId = (networkId: string | null) => {
+    console.log("Updated network id", networkId)
+    setNetworkId(networkId)
   }
 
   const withLoading = async (fn: () => Promise<void>) => {
@@ -39,16 +39,18 @@ export default function EnsureRegion({
     withLoading(async () => {
       console.log("EFFECT: fetchRegion")
       const newRegion = await getRegion()
-      updateRegion(newRegion)
+      updateNetworkId(newRegion?.name || null)
     })
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
-    regionApi
-      .create(data.name)
-      .then((result: ApiResult<RegionDetails, any>) => {
-        if ("Ok" in result) updateRegion(result.Ok)
-      })
+    nodeApi.bootstrap(data.name, null).then((result: ApiResult<any, any>) => {
+      if ("Ok" in result) {
+        updateNetworkId(data.name)
+      } else {
+        console.log("Failed to bootstrap", result)
+      }
+    })
   }
 
   useEffect(() => {

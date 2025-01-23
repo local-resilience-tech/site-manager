@@ -9,7 +9,7 @@ export default class ThisNodeApi extends BaseApi {
 
   bootstrap(
     network_name: string,
-    bootstrap_peer: BootstrapPeer,
+    bootstrap_peer: BootstrapPeer | null,
   ): Promise<ApiResult<any, any>> {
     return this.apiCall("this_node/bootstrap", "POST", {
       network_name,

@@ -56,7 +56,7 @@ async fn bootstrap(
     mut db: Connection<MainDb>,
     data: Json<BootstrapNodeData>,
     panda_container: &State<P2PandaContainer>,
-) -> Result<(), ThisNodeError> {
+) -> Result<Json<()>, ThisNodeError> {
     let repo = ThisNodeRepo::init();
 
     let bootstrap_peer = &data.bootstrap_peer;
@@ -89,7 +89,7 @@ async fn bootstrap(
         println!("Failed to start P2PandaContainer: {:?}", e);
     }
 
-    Ok(())
+    Ok(Json(()))
 }
 
 pub fn routes() -> Vec<Route> {
