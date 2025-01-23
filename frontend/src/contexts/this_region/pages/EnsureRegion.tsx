@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react"
 import { RegionDetails } from "../types"
-import { Box, Center, Container, Spinner } from "@chakra-ui/react"
+import { Center, Container, Spinner } from "@chakra-ui/react"
 import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
+import { ThisNodeApi } from "../../this_node"
 
-const api = new ThisRegionApi()
+const regionApi = new ThisRegionApi()
+const nodeApi = new ThisNodeApi()
 
 const getRegion = async (): Promise<RegionDetails | null> => {
-  const result = await api.show()
+  const result = await regionApi.show()
   if ("Ok" in result) return result.Ok
   return null
 }
@@ -19,12 +21,12 @@ export default function EnsureRegion({
 }: {
   children: React.ReactNode
 }) {
-  const [region, setRegion] = useState<RegionDetails | null>(null)
+  const [networkId, setNetworkId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const updateRegion = (newRegion: RegionDetails | null) => {
     console.log("Updating region", newRegion)
-    setRegion(newRegion)
+    setNetworkId(newRegion?.network_id || null)
   }
 
   const withLoading = async (fn: () => Promise<void>) => {
@@ -42,9 +44,11 @@ export default function EnsureRegion({
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
-    api.create(data.name).then((result: ApiResult<RegionDetails, any>) => {
-      if ("Ok" in result) updateRegion(result.Ok)
-    })
+    regionApi
+      .create(data.name)
+      .then((result: ApiResult<RegionDetails, any>) => {
+        if ("Ok" in result) updateRegion(result.Ok)
+      })
   }
 
   useEffect(() => {
@@ -63,8 +67,8 @@ export default function EnsureRegion({
 
   return (
     <Container maxWidth={"2xl"}>
-      {region == null && <SetRegion onSubmitNewRegion={onSubmitNewRegion} />}
-      {region != null && children}
+      {networkId == null && <SetRegion onSubmitNewRegion={onSubmitNewRegion} />}
+      {networkId != null && children}
     </Container>
   )
 }
