@@ -40,7 +40,7 @@ impl ThisRegionRepo {
         let region = sqlx::query_as!(
             Region,
             "
-            SELECT regions.id, regions.name
+            SELECT regions.name as network_id, regions.id, regions.name
             FROM regions
             INNER JOIN site_configs ON site_configs.this_region_id = regions.id
             WHERE site_configs.id = ?
@@ -88,8 +88,9 @@ impl ThisRegionRepo {
             .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
 
         return Ok(Region {
+            network_id: data.name.clone(),
             id: region_id,
-            name: data.name,
+            name: data.name.clone(),
         });
     }
 

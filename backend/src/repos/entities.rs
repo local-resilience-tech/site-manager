@@ -19,6 +19,7 @@ pub struct SiteConfig {
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Region {
+    pub network_id: String,
     pub id: String,
     pub name: String,
 }
