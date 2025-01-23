@@ -20,6 +20,7 @@ pub enum ThisNodeError {
     InternalServerError(String),
 }
 
+#[derive(Clone)]
 pub struct SimplifiedNodeAddress {
     pub node_id: String,
     pub ip4: String,
@@ -84,8 +85,13 @@ impl ThisNodeRepo {
         &self,
         db: &mut Connection<MainDb>,
         network_name: String,
-        bootstrap_node: SimplifiedNodeAddress,
+        peer_address: Option<SimplifiedNodeAddress>,
     ) -> Result<(), ThisNodeError> {
+        let bootstrap_node_id = peer_address
+            .as_ref()
+            .map(|peer| peer.node_id.clone());
+        let bootstrap_ip4 = peer_address.as_ref().map(|peer| peer.ip4.clone());
+
         let _region = sqlx::query!(
             "
             UPDATE network_configs
@@ -93,8 +99,8 @@ impl ThisNodeRepo {
             WHERE network_configs.id = ?
             ",
             network_name,
-            bootstrap_node.node_id,
-            bootstrap_node.ip4,
+            bootstrap_node_id,
+            bootstrap_ip4,
             NETWORK_CONFIG_ID
         )
         .execute(&mut ***db)
