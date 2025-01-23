@@ -11,3 +11,8 @@ export type NodeDetails = {
   iroh_node_addr: NodeAddr
   peers: NodeAddr[]
 }
+
+export type BootstrapPeer = {
+  node_id: string
+  ip4: string
+}

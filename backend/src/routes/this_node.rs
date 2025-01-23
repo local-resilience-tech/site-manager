@@ -39,10 +39,16 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
+pub struct BootstrapNodePeer {
+    pub node_id: String,
+    pub ip4: String,
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct BootstrapNodeData {
     network_name: String,
-    node_id: String,
-    ip_address: String,
+    bootstrap_peer: BootstrapNodePeer,
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]
@@ -53,7 +59,9 @@ async fn bootstrap(
 ) -> Result<(), ThisNodeError> {
     println!(
         "Bootstrapping to node: {:?}, {:?} , {:?}, ",
-        data.network_name, data.node_id, data.ip_address
+        data.network_name,
+        data.bootstrap_peer.node_id.clone(),
+        data.bootstrap_peer.ip4.clone()
     );
 
     let repo = ThisNodeRepo::init();
@@ -62,8 +70,8 @@ async fn bootstrap(
         &mut db,
         data.network_name.clone(),
         SimplifiedNodeAddress {
-            node_id: data.node_id.clone(),
-            ip4: data.ip_address.clone(),
+            node_id: data.bootstrap_peer.node_id.clone(),
+            ip4: data.bootstrap_peer.node_id.clone(),
         },
     )
     .await?;
@@ -73,7 +81,7 @@ async fn bootstrap(
         .await;
 
     let direct_address = panda_container
-        .build_direct_address(data.node_id.clone(), data.ip_address.clone())
+        .build_direct_address(data.bootstrap_peer.node_id.clone(), data.bootstrap_peer.ip4.clone())
         .map_err(|e| ThisNodeError::InternalServerError(e.to_string()))?;
 
     // start the container

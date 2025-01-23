@@ -1,5 +1,10 @@
 import { Box, Text } from "@chakra-ui/react"
-import { BootstrapNode, BootstrapNodeData, ThisNodeApi } from "../../this_node"
+import {
+  BootstrapNode,
+  BootstrapNodeData,
+  ThisNodeApi,
+  BootstrapPeer,
+} from "../../this_node"
 import { useState } from "react"
 
 const nodeApi = new ThisNodeApi()
@@ -10,7 +15,11 @@ export default function ExistingRegion() {
   )
 
   const onSubmitBootstrapNode = (data: BootstrapNodeData) => {
-    nodeApi.bootstrap(data.network_name, data.node_id, data.ip_address)
+    const peer: BootstrapPeer = {
+      node_id: data.node_id,
+      ip4: data.ip_address,
+    }
+    nodeApi.bootstrap(data.network_name, peer)
 
     // temp
     setBootstrapData(data)
