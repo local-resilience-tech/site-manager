@@ -6,10 +6,4 @@ export default class ThisRegionApi extends BaseApi {
   show(): Promise<ApiResult<RegionDetails, any>> {
     return this.apiCall("this_region")
   }
-
-  create(name: string): Promise<ApiResult<RegionDetails, any>> {
-    return this.apiCall("this_region/create", "POST", {
-      name,
-    })
-  }
 }
