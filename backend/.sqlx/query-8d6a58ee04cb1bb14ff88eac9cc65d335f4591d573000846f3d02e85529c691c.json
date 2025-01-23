@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT bootstrap_node_id, bootstrap_node_ip4\n            FROM network_configs\n            WHERE network_configs.id = ?\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "bootstrap_node_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "bootstrap_node_ip4",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "8d6a58ee04cb1bb14ff88eac9cc65d335f4591d573000846f3d02e85529c691c"
+}

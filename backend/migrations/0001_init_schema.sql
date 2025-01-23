@@ -1,8 +1,7 @@
 -- Add migration script here
 CREATE TABLE regions (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description VARCHAR(255)
+    name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE sites (
