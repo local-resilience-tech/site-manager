@@ -6,7 +6,7 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
-use crate::repos::this_node::{ThisNodeError, ThisNodeRepo};
+use crate::repos::this_node::{BootstrapNodeDetails, ThisNodeError, ThisNodeRepo};
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -58,8 +58,15 @@ async fn bootstrap(
 
     let repo = ThisNodeRepo::init();
 
-    repo.set_network_config(&mut db, data.network_name.clone(), data.node_id.clone(), data.ip_address.clone())
-        .await?;
+    repo.set_network_config(
+        &mut db,
+        data.network_name.clone(),
+        BootstrapNodeDetails {
+            node_id: data.node_id.clone(),
+            ip4: data.ip_address.clone(),
+        },
+    )
+    .await?;
 
     panda_container
         .set_network_name(data.network_name.clone())

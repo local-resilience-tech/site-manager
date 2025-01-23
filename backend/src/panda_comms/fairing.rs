@@ -45,7 +45,17 @@ impl Fairing for P2PandaCommsFairing {
                     }
                 }
 
-                if let Err(e) = container.start(None).await {
+                let bootstrap_details = repo.get_bootstrap_details(db).await.unwrap();
+                let direct_address = match bootstrap_details {
+                    Some(bootstrap) => Some(
+                        container
+                            .build_direct_address(bootstrap.node_id, bootstrap.ip4)
+                            .unwrap(),
+                    ),
+                    None => None,
+                };
+
+                if let Err(e) = container.start(direct_address).await {
                     println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
                 }
             } else {

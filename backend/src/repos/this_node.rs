@@ -7,6 +7,7 @@ use crate::{
 };
 use hex;
 use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
+use rocket::data::N;
 use rocket_db_pools::Connection;
 use sqlx;
 use thiserror::Error;
@@ -18,6 +19,11 @@ pub enum ThisNodeError {
     #[error("Internal server error: {0}")]
     #[response(status = 500)]
     InternalServerError(String),
+}
+
+pub struct BootstrapNodeDetails {
+    pub node_id: String,
+    pub ip4: String,
 }
 
 impl ThisNodeRepo {
@@ -47,12 +53,39 @@ impl ThisNodeRepo {
         }
     }
 
+    pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<BootstrapNodeDetails>, ThisNodeError> {
+        let mut connection = db.sqlite_pool().acquire().await.unwrap();
+
+        let result = sqlx::query!(
+            "
+            SELECT bootstrap_node_id, bootstrap_node_ip4
+            FROM network_configs
+            WHERE network_configs.id = ?
+            LIMIT 1
+            ",
+            NETWORK_CONFIG_ID
+        )
+        .fetch_optional(&mut *connection)
+        .await
+        .map_err(|_| ThisNodeError::InternalServerError("Database error".to_string()))?;
+
+        match result {
+            None => return Ok(None),
+            Some(result) => match result.bootstrap_node_id {
+                None => return Ok(None),
+                Some(node_id) => Ok(Some(BootstrapNodeDetails {
+                    node_id: node_id,
+                    ip4: result.bootstrap_node_ip4.unwrap(),
+                })),
+            },
+        }
+    }
+
     pub async fn set_network_config(
         &self,
         db: &mut Connection<MainDb>,
         network_name: String,
-        bootstrap_node_id: String,
-        bootstrap_node_ip4: String,
+        bootstrap_node: BootstrapNodeDetails,
     ) -> Result<(), ThisNodeError> {
         let _region = sqlx::query!(
             "
@@ -61,8 +94,8 @@ impl ThisNodeRepo {
             WHERE network_configs.id = ?
             ",
             network_name,
-            bootstrap_node_id,
-            bootstrap_node_ip4,
+            bootstrap_node.node_id,
+            bootstrap_node.ip4,
             NETWORK_CONFIG_ID
         )
         .execute(&mut ***db)
