@@ -20,7 +20,7 @@ pub enum ThisNodeError {
     InternalServerError(String),
 }
 
-pub struct BootstrapNodeDetails {
+pub struct SimplifiedNodeAddress {
     pub node_id: String,
     pub ip4: String,
 }
@@ -52,7 +52,7 @@ impl ThisNodeRepo {
         }
     }
 
-    pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<BootstrapNodeDetails>, ThisNodeError> {
+    pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<SimplifiedNodeAddress>, ThisNodeError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 
         let result = sqlx::query!(
@@ -72,7 +72,7 @@ impl ThisNodeRepo {
             None => return Ok(None),
             Some(result) => match result.bootstrap_node_id {
                 None => return Ok(None),
-                Some(node_id) => Ok(Some(BootstrapNodeDetails {
+                Some(node_id) => Ok(Some(SimplifiedNodeAddress {
                     node_id: node_id,
                     ip4: result.bootstrap_node_ip4.unwrap(),
                 })),
@@ -84,7 +84,7 @@ impl ThisNodeRepo {
         &self,
         db: &mut Connection<MainDb>,
         network_name: String,
-        bootstrap_node: BootstrapNodeDetails,
+        bootstrap_node: SimplifiedNodeAddress,
     ) -> Result<(), ThisNodeError> {
         let _region = sqlx::query!(
             "
