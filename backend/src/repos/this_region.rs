@@ -14,7 +14,6 @@ pub struct ThisRegionRepo {}
 #[serde(crate = "rocket::serde")]
 pub struct CreateRegionData {
     name: String,
-    description: String,
 }
 
 #[derive(Debug, Error, Responder)]
@@ -41,7 +40,7 @@ impl ThisRegionRepo {
         let region = sqlx::query_as!(
             Region,
             "
-            SELECT regions.id, regions.name, regions.description
+            SELECT regions.id, regions.name
             FROM regions
             INNER JOIN site_configs ON site_configs.this_region_id = regions.id
             WHERE site_configs.id = ?
@@ -83,20 +82,14 @@ impl ThisRegionRepo {
 
         let region_id = Uuid::new_v4().to_string();
 
-        let _region = sqlx::query!(
-            "INSERT INTO regions (id, name, description) VALUES (?, ?, ?)",
-            region_id,
-            data.name,
-            data.description
-        )
-        .execute(&mut ***db)
-        .await
-        .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
+        let _region = sqlx::query!("INSERT INTO regions (id, name) VALUES (?, ?)", region_id, data.name)
+            .execute(&mut ***db)
+            .await
+            .map_err(|_| ThisRegionError::InternalServerError("Database error".to_string()))?;
 
         return Ok(Region {
             id: region_id,
             name: data.name,
-            description: Some(data.description),
         });
     }
 

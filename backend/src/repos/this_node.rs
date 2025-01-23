@@ -7,7 +7,6 @@ use crate::{
 };
 use hex;
 use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
-use rocket::data::N;
 use rocket_db_pools::Connection;
 use sqlx;
 use thiserror::Error;

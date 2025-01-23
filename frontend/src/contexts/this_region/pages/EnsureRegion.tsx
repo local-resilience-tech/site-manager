@@ -14,7 +14,11 @@ const getRegion = async (): Promise<RegionDetails | null> => {
   return null
 }
 
-export default function EnsureRegion({ children }: { children: React.ReactNode }) {
+export default function EnsureRegion({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const [region, setRegion] = useState<RegionDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -38,11 +42,9 @@ export default function EnsureRegion({ children }: { children: React.ReactNode }
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
-    api
-      .create(data.name, data.description)
-      .then((result: ApiResult<RegionDetails, any>) => {
-        if ("Ok" in result) updateRegion(result.Ok)
-      })
+    api.create(data.name).then((result: ApiResult<RegionDetails, any>) => {
+      if ("Ok" in result) updateRegion(result.Ok)
+    })
   }
 
   useEffect(() => {
@@ -61,9 +63,7 @@ export default function EnsureRegion({ children }: { children: React.ReactNode }
 
   return (
     <Container maxWidth={"2xl"}>
-      {region == null && (
-        <SetRegion onSubmitNewRegion={onSubmitNewRegion} />
-      )}
+      {region == null && <SetRegion onSubmitNewRegion={onSubmitNewRegion} />}
       {region != null && children}
     </Container>
   )

@@ -5,7 +5,6 @@ import { Field, FormActions, Button, FormFields } from "../../../components"
 
 export interface NewRegionData {
   name: string
-  description: string
 }
 
 export type SubmitNewRegionFunc = (data: NewRegionData) => void
@@ -40,22 +39,6 @@ export default function NewRegion({
               pattern: {
                 value: /^[a-z]+(-[a-z]+)*$/,
                 message: "Lowercase letters only, no spaces, hyphens allowed",
-              },
-            })}
-          />
-        </Field>
-
-        <Field
-          label="Description"
-          helperText={`A description of your Region`}
-          invalid={!!errors.description}
-          errorText={errors.description?.message}
-        >
-          <Textarea
-            {...register("description", {
-              maxLength: {
-                value: 255,
-                message: "Must be less than 255 characters",
               },
             })}
           />
