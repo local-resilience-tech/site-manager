@@ -35,9 +35,9 @@ export default function EnsureRegion({
 
   const fetchRegion = async () => {
     withLoading(async () => {
-      console.log("EFFECT: fetchRegion")
       const newRegion = await getRegion()
-      updateNetworkId(newRegion?.name || null)
+      console.log("EFFECT: fetchRegion", newRegion)
+      updateNetworkId(newRegion?.network_id || null)
     })
   }
 

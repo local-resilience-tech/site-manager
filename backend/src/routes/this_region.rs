@@ -6,17 +6,25 @@ use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
 use crate::repos::entities::Region;
 use crate::repos::this_node::{SimplifiedNodeAddress, ThisNodeError, ThisNodeRepo};
-use crate::repos::this_region::{ThisRegionError, ThisRegionRepo};
 
 use super::this_node::BootstrapNodeData;
 
 #[get("/", format = "json")]
-async fn show(mut db: Connection<MainDb>) -> Result<Json<Region>, ThisRegionError> {
-    let repo = ThisRegionRepo::init();
+async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisNodeError> {
+    let repo = ThisNodeRepo::init();
 
-    repo.get_region(&mut db)
+    repo.get_network_name_conn(&mut db)
         .await
-        .map(|region| Json(region))
+        .map(|network_id| match network_id {
+            Some(network_id) => {
+                println!("got network id {}", network_id);
+                Json(Some(Region { network_id }))
+            }
+            None => {
+                println!("no network id");
+                Json(None)
+            }
+        })
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]

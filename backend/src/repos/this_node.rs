@@ -53,6 +53,28 @@ impl ThisNodeRepo {
         }
     }
 
+    // TODO: I don't know how to handle the DB connection in these two different ways, this is a
+    // temporary solution
+    pub async fn get_network_name_conn(&self, connection: &mut Connection<MainDb>) -> Result<Option<String>, ThisNodeError> {
+        let result = sqlx::query!(
+            "
+            SELECT network_name
+            FROM network_configs
+            WHERE network_configs.id = ?
+            LIMIT 1
+            ",
+            NETWORK_CONFIG_ID
+        )
+        .fetch_optional(&mut ***connection)
+        .await
+        .map_err(|_| ThisNodeError::InternalServerError("Database error".to_string()))?;
+
+        match result {
+            None => return Ok(None),
+            Some(result) => return Ok(result.network_name),
+        }
+    }
+
     pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<SimplifiedNodeAddress>, ThisNodeError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 

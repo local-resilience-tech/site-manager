@@ -12,7 +12,7 @@ export default class ThisRegionApi extends BaseApi {
     network_name: string,
     bootstrap_peer: BootstrapPeer | null,
   ): Promise<ApiResult<any, any>> {
-    return this.apiCall("this_node/bootstrap", "POST", {
+    return this.apiCall("this_region/bootstrap", "POST", {
       network_name,
       bootstrap_peer,
     })
