@@ -5,10 +5,8 @@ import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
-import { ThisNodeApi } from "../../this_node"
 
 const regionApi = new ThisRegionApi()
-const nodeApi = new ThisNodeApi()
 
 const getRegion = async (): Promise<RegionDetails | null> => {
   const result = await regionApi.show()
@@ -44,7 +42,7 @@ export default function EnsureRegion({
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
-    nodeApi.bootstrap(data.name, null).then((result: ApiResult<any, any>) => {
+    regionApi.bootstrap(data.name, null).then((result: ApiResult<any, any>) => {
       if ("Ok" in result) {
         updateNetworkId(data.name)
       } else {
