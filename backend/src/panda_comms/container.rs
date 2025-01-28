@@ -39,6 +39,10 @@ impl TopicId for ChatTopic {
     }
 }
 
+// This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
+// production use, and LoRes tech will eventually provide a relay node for production use.
+const RELAY_URL: &str = "https://wasser.liebechaos.org";
+
 #[derive(Default)]
 pub struct P2PandaContainer {
     network_name: Arc<Mutex<Option<String>>>,
@@ -109,6 +113,7 @@ impl P2PandaContainer {
 
         let mut builder = NetworkBuilder::new(network_id)
             .private_key(private_key.clone())
+            .relay(RELAY_URL.parse().unwrap(), false, 0)
             .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?);
 
