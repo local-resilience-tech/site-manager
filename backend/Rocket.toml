@@ -1,6 +1,6 @@
 [default]
 frontend_asset_path = ""
-log_level = "normal"
+log_level = "critical"
 
 [default.databases.main_db]
 url = "./main.sqlite"

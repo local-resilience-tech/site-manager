@@ -1,5 +1,5 @@
 services:
   site-manager:
-    image: resilientlocaltech/site-manager
+    image: ghcr.io/local-resilience-tech/site-manager:latest
     ports:
       - "8000:80"
