@@ -9,6 +9,7 @@ use crate::repos::this_node::ThisNodeError;
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct NodeDetails {
+    pub network_name: String,
     pub panda_node_id: String,
     pub iroh_node_addr: NodeAddr,
     pub peers: Vec<NodeAddr>,
@@ -26,7 +27,10 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
 
     let peers = panda_container.known_peers().await;
 
+    let network_name = panda_container.get_network_name().await.unwrap();
+
     let node_details = NodeDetails {
+        network_name: network_name.to_string(),
         panda_node_id: public_key,
         iroh_node_addr: node_addr,
         peers: peers.unwrap(),

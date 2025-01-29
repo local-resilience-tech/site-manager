@@ -7,6 +7,7 @@ export type NodeAddr = {
 }
 
 export type NodeDetails = {
+  network_name: string
   panda_node_id: string
   iroh_node_addr: NodeAddr
   peers: NodeAddr[]

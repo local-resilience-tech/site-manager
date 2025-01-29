@@ -40,6 +40,12 @@ export default function ThisNode() {
         </Table.Header>
         <Table.Body>
           <Table.Row>
+            <Table.Cell>Network Name</Table.Cell>
+            <Table.Cell>
+              <pre>{node.network_name}</pre>
+            </Table.Cell>
+          </Table.Row>
+          <Table.Row>
             <Table.Cell>Panda Node Id</Table.Cell>
             <Table.Cell>
               <pre>{node.panda_node_id}</pre>
