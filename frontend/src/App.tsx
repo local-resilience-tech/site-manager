@@ -6,7 +6,7 @@ import { InstalledApps } from "./contexts/apps"
 import { themeSystem } from "./theme"
 import { EnsureSite } from "./contexts/this_site"
 import { ThisNode } from "./contexts/this_node"
-import { EnsureRegion } from "./contexts/this_region"
+import { EnsureRegion, RegionSites } from "./contexts/this_region"
 
 const router = createBrowserRouter(
   [
@@ -22,6 +22,7 @@ const router = createBrowserRouter(
             </EnsureRegion>
           ),
         },
+        { path: "region", element: <RegionSites /> },
         { path: "node", element: <ThisNode /> },
         { path: "apps", element: <InstalledApps /> },
       ],
