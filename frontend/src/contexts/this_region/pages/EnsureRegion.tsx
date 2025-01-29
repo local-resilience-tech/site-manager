@@ -5,6 +5,7 @@ import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
+import RegionContext from "../region_context"
 
 const regionApi = new ThisRegionApi()
 
@@ -19,12 +20,12 @@ export default function EnsureRegion({
 }: {
   children: React.ReactNode
 }) {
-  const [networkId, setNetworkId] = useState<string | null>(null)
+  const [region, setRegion] = useState<RegionDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const updateNetworkId = (networkId: string | null) => {
-    console.log("Updated network id", networkId)
-    setNetworkId(networkId)
+  const updateRegion = (newRegion: RegionDetails | null) => {
+    console.log("Updated region", newRegion)
+    setRegion(newRegion)
   }
 
   const withLoading = async (fn: () => Promise<void>) => {
@@ -37,14 +38,15 @@ export default function EnsureRegion({
     withLoading(async () => {
       const newRegion = await getRegion()
       console.log("EFFECT: fetchRegion", newRegion)
-      updateNetworkId(newRegion?.network_id || null)
+      updateRegion(newRegion || null)
     })
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
     regionApi.bootstrap(data.name, null).then((result: ApiResult<any, any>) => {
       if ("Ok" in result) {
-        updateNetworkId(data.name)
+        console.log("Successfully bootstrapped", result, "Fetching region")
+        fetchRegion()
       } else {
         console.log("Failed to bootstrap", result)
       }
@@ -65,10 +67,17 @@ export default function EnsureRegion({
     )
   }
 
-  return (
-    <Container maxWidth={"2xl"}>
-      {networkId == null && <SetRegion onSubmitNewRegion={onSubmitNewRegion} />}
-      {networkId != null && children}
-    </Container>
-  )
+  if (region == null) {
+    return (
+      <Container maxWidth={"2xl"}>
+        <SetRegion onSubmitNewRegion={onSubmitNewRegion} />
+      </Container>
+    )
+  } else {
+    return (
+      <RegionContext.Provider value={region}>
+        <Container maxWidth={"2xl"}>{children}</Container>
+      </RegionContext.Provider>
+    )
+  }
 }

@@ -18,7 +18,7 @@ const router = createBrowserRouter(
           path: "",
           element: (
             <EnsureRegion>
-              <EnsureSite />
+              <RegionSites />
             </EnsureRegion>
           ),
         },
