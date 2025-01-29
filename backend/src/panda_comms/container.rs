@@ -4,7 +4,7 @@ use iroh_net::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, ToNetwork, TopicId};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, RelayUrl, ToNetwork, TopicId};
 use p2panda_sync::TopicQuery;
 use rocket::tokio;
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ impl TopicId for ChatTopic {
 
 // This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
 // production use, and LoRes tech will eventually provide a relay node for production use.
-const RELAY_URL: &str = "https://wasser.liebechaos.org";
+const RELAY_URL: &str = "https://wasser.liebechaos.org/";
 
 #[derive(Default)]
 pub struct P2PandaContainer {
@@ -106,20 +106,17 @@ impl P2PandaContainer {
 
         let topic = ChatTopic::new("site_management");
 
-        // Bootstrap node details
-        // let node_id = build_public_key_from_hex("073912eccc459a93f71b998373097d6e6bdd96ccffdab9be4d3da6ac6358030a".to_string()).unwrap();
-        // let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(170, 64, 151, 138), 2022));
-        // let addresses: Vec<SocketAddr> = vec![addr];
+        let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
 
         let mut builder = NetworkBuilder::new(network_id)
             .private_key(private_key.clone())
-            .relay(RELAY_URL.parse().unwrap(), false, 0)
+            .relay(relay_url.clone(), false, 0)
             .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?);
 
         if let Some(direct_address) = direct_address {
             let DirectAddress { node_id, addresses } = direct_address;
-            builder = builder.direct_address(node_id, addresses, None);
+            builder = builder.direct_address(node_id, addresses, Some(relay_url.clone()));
         }
 
         let network: Network<ChatTopic> = builder.build().await?;
