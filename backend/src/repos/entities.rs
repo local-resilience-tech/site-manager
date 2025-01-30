@@ -16,10 +16,18 @@ pub struct SiteConfig {
     pub name: String,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct Node {
+    pub node_id: String,
+    pub site: Option<Site>,
+}
+
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Region {
     pub network_id: String,
+    pub nodes: Vec<Node>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]

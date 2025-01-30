@@ -1,30 +1,49 @@
+use iroh_net::NodeAddr;
 use rocket::serde::json::Json;
 use rocket::{Route, State};
 use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
-use crate::repos::entities::Region;
+use crate::repos::entities::{Node, Region};
 use crate::repos::this_node::{SimplifiedNodeAddress, ThisNodeError, ThisNodeRepo};
 
 use super::this_node::BootstrapNodeData;
 
 #[get("/", format = "json")]
-async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisNodeError> {
-    let repo = ThisNodeRepo::init();
+async fn show(mut db: Connection<MainDb>, panda_container: &State<P2PandaContainer>) -> Result<Json<Option<Region>>, ThisNodeError> {
+    let is_started = panda_container.is_started().await;
 
-    repo.get_network_name_conn(&mut db)
+    if !is_started {
+        return Ok(Json(None));
+    }
+
+    let repo = ThisNodeRepo::init();
+    let network_name_result = repo.get_network_name_conn(&mut db).await?;
+
+    if None == network_name_result {
+        return Ok(Json(None));
+    }
+
+    let network_name = network_name_result.unwrap();
+
+    let peers: Vec<NodeAddr> = panda_container
+        .known_peers()
         .await
-        .map(|network_id| match network_id {
-            Some(network_id) => {
-                println!("got network id {}", network_id);
-                Json(Some(Region { network_id }))
-            }
-            None => {
-                println!("no network id");
-                Json(None)
-            }
+        .map_err(|_| ThisNodeError::InternalServerError("Error finding peers".to_string()))?;
+
+    let nodes: Vec<Node> = peers
+        .iter()
+        .map(|peer| Node {
+            node_id: peer.node_id.to_string(),
+            site: None,
         })
+        .collect();
+
+    return Ok(Json(Some(Region {
+        network_id: network_name,
+        nodes,
+    })));
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]

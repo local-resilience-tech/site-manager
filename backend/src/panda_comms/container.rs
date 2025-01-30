@@ -147,6 +147,11 @@ impl P2PandaContainer {
         Ok(())
     }
 
+    pub async fn is_started(&self) -> bool {
+        let network = self.network.lock().await;
+        network.is_some()
+    }
+
     pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
         let network = self.network.lock().await;
         let network = network.as_ref().ok_or("Network not started")?;

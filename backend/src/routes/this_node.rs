@@ -16,7 +16,12 @@ pub struct NodeDetails {
 }
 
 #[get("/", format = "json")]
-async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDetails>, ThisNodeError> {
+async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<Option<NodeDetails>>, ThisNodeError> {
+    let is_started = panda_container.is_started().await;
+    if !is_started {
+        return Ok(Json(None));
+    }
+
     let public_key: String = panda_container
         .get_public_key()
         .await
@@ -36,7 +41,7 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
         peers: peers.unwrap(),
     };
 
-    Ok(Json(node_details))
+    Ok(Json(Some(node_details)))
 }
 
 #[derive(Deserialize)]
