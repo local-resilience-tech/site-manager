@@ -109,14 +109,14 @@ impl P2PandaContainer {
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
 
         let mut builder = NetworkBuilder::new(network_id)
-            // .private_key(private_key.clone())
-            .relay(relay_url.clone(), false, 0)
+            .private_key(private_key.clone())
+            //.relay(relay_url.clone(), false, 0)
             .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?);
 
         if let Some(direct_address) = direct_address {
             let DirectAddress { node_id, addresses } = direct_address;
-            builder = builder.direct_address(node_id, vec![], Some(relay_url.clone()));
+            builder = builder.direct_address(node_id, addresses, None);
         }
 
         let network: Network<ChatTopic> = builder.build().await?;
