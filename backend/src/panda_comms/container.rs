@@ -1,10 +1,10 @@
 use anyhow::Result;
 use gethostname::gethostname;
-use iroh_net::NodeAddr;
+use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, RelayUrl, ToNetwork, TopicId};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, RelayUrl, ToNetwork, TopicId};
 use p2panda_sync::TopicQuery;
 use rocket::tokio;
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ impl TopicId for ChatTopic {
 
 // This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
 // production use, and LoRes tech will eventually provide a relay node for production use.
-const RELAY_URL: &str = "https://wasser.liebechaos.org/";
+const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 
 #[derive(Default)]
 pub struct P2PandaContainer {
@@ -110,7 +110,7 @@ impl P2PandaContainer {
 
         let mut builder = NetworkBuilder::new(network_id)
             .private_key(private_key.clone())
-            //.relay(relay_url.clone(), false, 0)
+            .relay(relay_url.clone(), false, 0)
             .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?);
 
@@ -167,7 +167,7 @@ impl P2PandaContainer {
         node_addr
     }
 
-    pub async fn known_peers(&self) -> Result<Vec<NodeAddr>> {
+    pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
         let network = self.network.lock().await;
         let network = network.as_ref().unwrap();
         return network.known_peers().await;

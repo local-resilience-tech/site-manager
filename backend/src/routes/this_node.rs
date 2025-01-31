@@ -1,4 +1,5 @@
-use iroh_net::NodeAddr;
+use iroh::NodeAddr;
+use p2panda_net::NodeAddress;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::{Route, State};
@@ -12,7 +13,7 @@ pub struct NodeDetails {
     pub network_name: String,
     pub panda_node_id: String,
     pub iroh_node_addr: NodeAddr,
-    pub peers: Vec<NodeAddr>,
+    pub peers: Vec<NodeAddress>,
 }
 
 #[get("/", format = "json")]
@@ -30,7 +31,10 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<Option<N
 
     let node_addr = panda_container.get_node_addr().await;
 
-    let peers = panda_container.known_peers().await;
+    let peers = panda_container
+        .known_peers()
+        .await
+        .map_err(|_| ThisNodeError::InternalServerError("Error finding peers".to_string()))?;
 
     let network_name = panda_container.get_network_name().await.unwrap();
 
@@ -38,7 +42,7 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<Option<N
         network_name: network_name.to_string(),
         panda_node_id: public_key,
         iroh_node_addr: node_addr,
-        peers: peers.unwrap(),
+        peers: peers,
     };
 
     Ok(Json(Some(node_details)))
