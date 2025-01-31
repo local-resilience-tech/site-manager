@@ -109,7 +109,7 @@ impl P2PandaContainer {
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
 
         let mut builder = NetworkBuilder::new(network_id)
-            .private_key(private_key.clone())
+            // .private_key(private_key.clone())
             .relay(relay_url.clone(), false, 0)
             .discovery(LocalDiscovery::new())
             .discovery(ManualDiscovery::new()?);
