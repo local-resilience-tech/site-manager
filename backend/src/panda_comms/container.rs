@@ -116,7 +116,7 @@ impl P2PandaContainer {
 
         if let Some(direct_address) = direct_address {
             let DirectAddress { node_id, addresses } = direct_address;
-            builder = builder.direct_address(node_id, addresses, Some(relay_url.clone()));
+            builder = builder.direct_address(node_id, vec![], Some(relay_url.clone()));
         }
 
         let network: Network<ChatTopic> = builder.build().await?;
