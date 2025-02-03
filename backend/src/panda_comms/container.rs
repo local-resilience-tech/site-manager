@@ -12,7 +12,6 @@ use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::panda_comms::manual_discovery::ManualDiscovery;
 use crate::panda_comms::messages::Message;
 use crate::panda_comms::site_messages::{SiteMessages, SiteRegistration};
 use crate::panda_comms::sites::Sites;
@@ -109,12 +108,11 @@ impl P2PandaContainer {
 
         let mut builder = NetworkBuilder::new(network_id)
             .private_key(private_key.clone())
-            .discovery(LocalDiscovery::new())
-            .discovery(ManualDiscovery::new()?);
+            .discovery(LocalDiscovery::new());
 
         if let Some(direct_address) = direct_address {
             let DirectAddress { node_id, addresses } = direct_address;
-            builder = builder.direct_address(node_id, addresses, None);
+            builder = builder.direct_address(node_id, vec![], None);
         }
 
         let network: Network<ChatTopic> = builder.build().await?;
