@@ -59,6 +59,32 @@ impl P2PandaContainer {
         Ok(DirectAddress { node_id, addresses })
     }
 
+    pub async fn is_started(&self) -> bool {
+        let network = self.network.lock().await;
+        network.is_some()
+    }
+
+    pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let network = self.network.lock().await;
+        let network = network.as_ref().ok_or("Network not started")?;
+        let node_id = network.node_id();
+        Ok(node_id.to_string())
+    }
+
+    pub async fn get_node_addr(&self) -> NodeAddr {
+        let network = self.network.lock().await;
+        let network = network.as_ref().unwrap();
+        let endpoint = network.endpoint();
+        let node_addr = endpoint.node_addr().await.unwrap();
+        node_addr
+    }
+
+    pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
+        let network = self.network.lock().await;
+        let network = network.as_ref().unwrap();
+        return network.known_peers().await;
+    }
+
     pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
@@ -88,21 +114,42 @@ impl P2PandaContainer {
 
         let network_id: NetworkId = Hash::new(network_name).into();
 
-        let topic = ChatTopic::new("site_management");
-
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
 
-        let mut builder = NetworkBuilder::new(network_id)
-            .private_key(private_key.clone())
+        // Setup Network Builder
+        let mut builder = NetworkBuilder::new(network_id).private_key(private_key.clone());
+
+        // Setup connection config and bootstrapping
+        builder = builder
             .relay(relay_url.clone(), false, 0)
             .discovery(LocalDiscovery::new());
 
         if let Some(direct_address) = direct_address {
-            let DirectAddress { node_id, addresses } = direct_address;
+            let DirectAddress { node_id, addresses: _ } = direct_address;
             builder = builder.direct_address(node_id, vec![], None);
         }
 
+        // Create network
         let network: Network<ChatTopic> = builder.build().await?;
+
+        // put the network in the container
+        let mut network_lock = self.network.lock().await;
+        *network_lock = Some(network);
+
+        // Setup subscriptions
+        self.setup_subscriptions(site_name, private_key)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn setup_subscriptions(&self, site_name: String, private_key: PrivateKey) -> Result<(), anyhow::Error> {
+        let topic = ChatTopic::new("site_management");
+
+        let network = self.network.lock().await;
+        let network = network
+            .as_ref()
+            .ok_or(anyhow::Error::msg("Network not started"))?;
 
         let (tx, mut rx, _ready) = network.subscribe(topic).await?;
 
@@ -125,37 +172,7 @@ impl P2PandaContainer {
             }
         });
 
-        // put the network in the container
-        let mut network_lock = self.network.lock().await;
-        *network_lock = Some(network);
-
         Ok(())
-    }
-
-    pub async fn is_started(&self) -> bool {
-        let network = self.network.lock().await;
-        network.is_some()
-    }
-
-    pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
-        let network = self.network.lock().await;
-        let network = network.as_ref().ok_or("Network not started")?;
-        let node_id = network.node_id();
-        Ok(node_id.to_string())
-    }
-
-    pub async fn get_node_addr(&self) -> NodeAddr {
-        let network = self.network.lock().await;
-        let network = network.as_ref().unwrap();
-        let endpoint = network.endpoint();
-        let node_addr = endpoint.node_addr().await.unwrap();
-        node_addr
-    }
-
-    pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
-        let network = self.network.lock().await;
-        let network = network.as_ref().unwrap();
-        return network.known_peers().await;
     }
 }
 
