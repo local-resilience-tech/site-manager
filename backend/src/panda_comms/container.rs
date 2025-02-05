@@ -4,38 +4,20 @@ use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, RelayUrl, ToNetwork, TopicId};
-use p2panda_sync::TopicQuery;
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, RelayUrl, ToNetwork};
 use rocket::tokio;
-use serde::{Deserialize, Serialize};
 use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::panda_comms::messages::Message;
-use crate::panda_comms::site_messages::{SiteMessages, SiteRegistration};
-use crate::panda_comms::sites::Sites;
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub struct ChatTopic(String, [u8; 32]);
+use super::messages::Message;
+use super::site_messages::{SiteMessages, SiteRegistration};
+use super::sites::Sites;
+use super::topics::ChatTopic;
 
 pub struct DirectAddress {
     pub node_id: PublicKey,
     pub addresses: Vec<SocketAddr>,
-}
-
-impl ChatTopic {
-    pub fn new(name: &str) -> Self {
-        Self(name.to_owned(), *Hash::new(name).as_bytes())
-    }
-}
-
-impl TopicQuery for ChatTopic {}
-
-impl TopicId for ChatTopic {
-    fn id(&self) -> [u8; 32] {
-        self.1
-    }
 }
 
 // This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
