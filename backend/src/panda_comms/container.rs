@@ -60,8 +60,6 @@ impl P2PandaContainer {
     }
 
     pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
-        let mut sites = Sites::build();
-
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
 
@@ -81,6 +79,11 @@ impl P2PandaContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
+        self.start_for(site_name, private_key, network_name, direct_address)
+            .await
+    }
+
+    async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, direct_address: Option<DirectAddress>) -> Result<()> {
         println!("P2Panda: Starting network: {}", network_name);
 
         let network_id: NetworkId = Hash::new(network_name).into();
@@ -102,6 +105,8 @@ impl P2PandaContainer {
         let network: Network<ChatTopic> = builder.build().await?;
 
         let (tx, mut rx, _ready) = network.subscribe(topic).await?;
+
+        let mut sites = Sites::build();
 
         tokio::task::spawn(async move {
             while let Some(event) = rx.recv().await {
