@@ -14,6 +14,7 @@ p2panda-net = "0.2.0"
 p2panda-core = "0.2.0"
 p2panda-discovery = "0.2.0"
 p2panda-store = "0.2.0"
+p2panda-stream = "0.2.0"
 gethostname = "0.5.0"
 serde = "1.0.216"
 anyhow = "1.0.94"
@@ -32,4 +33,6 @@ version = "0.5.1"
 features = ["json"]
 
 [dev-dependencies]
-sqlx-cli = { version = "0.7.4", default-features = false, features = ["sqlite"] }
+sqlx-cli = { version = "0.7.4", default-features = false, features = [
+  "sqlite",
+] }

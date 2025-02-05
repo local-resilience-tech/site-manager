@@ -4,8 +4,9 @@ use iroh_net::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, SyncConfiguration, ToNetwork};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, SyncConfiguration, TopicId};
 use p2panda_store::MemoryStore;
+use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use rocket::tokio;
 use std::net::{SocketAddr, SocketAddrV4};
@@ -13,14 +14,14 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use super::messages::Message;
-use super::operations::Extensions;
-use super::site_messages::{SiteMessages, SiteRegistration};
+use super::operations::{create_operation, encode_gossip_message, Extensions};
+use super::site_messages::SiteMessages;
 use super::sites::Sites;
 use super::topics::{AuthorStore, ChatTopic, LogId};
 
 pub struct DirectAddress {
     pub node_id: PublicKey,
-    pub addresses: Vec<SocketAddr>,
+    pub _addresses: Vec<SocketAddr>,
 }
 
 #[derive(Default)]
@@ -55,7 +56,10 @@ impl P2PandaContainer {
         let node_id = build_public_key_from_hex(node_id_hex).ok_or(anyhow::Error::msg("Invalid node id"))?;
         let addr = SocketAddr::V4(SocketAddrV4::new(ip4_address.parse()?, 2022));
         let addresses: Vec<SocketAddr> = vec![addr];
-        Ok(DirectAddress { node_id, addresses })
+        Ok(DirectAddress {
+            node_id,
+            _addresses: addresses,
+        })
     }
 
     pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
@@ -99,7 +103,7 @@ impl P2PandaContainer {
             .discovery(LocalDiscovery::new());
 
         if let Some(direct_address) = direct_address {
-            let DirectAddress { node_id, addresses: _ } = direct_address;
+            let DirectAddress { node_id, _addresses: _ } = direct_address;
             builder = builder.direct_address(node_id, vec![], None);
         }
 
@@ -113,7 +117,7 @@ impl P2PandaContainer {
         // Create network
         let network: Network<ChatTopic> = builder.build().await?;
 
-        self.setup_subscriptions(topic, &network, site_name, private_key)
+        self.setup_subscriptions(topic, &network, operation_store.clone(), site_name, private_key)
             .await?;
 
         // put the network in the container
@@ -127,21 +131,30 @@ impl P2PandaContainer {
         &self,
         topic: ChatTopic,
         network: &Network<ChatTopic>,
+        operation_store: MemoryStore<[u8; 32], Extensions>,
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
-        let (tx, mut rx, _ready) = network.subscribe(topic).await?;
+        let (tx, mut rx, _ready) = network.subscribe(topic.clone()).await?;
         let mut sites = Sites::build();
         tokio::task::spawn(async move {
             while let Some(event) = rx.recv().await {
                 handle_gossip_event(event, &mut sites);
             }
         });
+
+        let mut operation_store = operation_store.clone();
+        let topic = topic.clone();
+
+        // spawn a task to announce the site every 30 seconds
         tokio::task::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
-                announce_site(&private_key, &site_name, &tx)
+                // announce_site_msg(&private_key, &site_name, &tx)
+                //     .await
+                //     .ok();
+                announce_site_operation(&mut operation_store, topic.id(), &private_key)
                     .await
                     .ok();
             }
@@ -202,12 +215,38 @@ fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
     }
 }
 
-async fn announce_site(private_key: &PrivateKey, name: &str, tx: &tokio::sync::mpsc::Sender<ToNetwork>) -> Result<()> {
-    println!("Announcing myself: {}", name);
-    tx.send(ToNetwork::Message {
-        bytes: Message::sign_and_encode(private_key, SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() }))?,
-    })
-    .await?;
+// async fn announce_site_msg(private_key: &PrivateKey, name: &str, tx: &tokio::sync::mpsc::Sender<ToNetwork>) -> Result<()> {
+//     println!("Announcing myself: {}", name);
+//     tx.send(ToNetwork::Message {
+//         bytes: Message::sign_and_encode(private_key, SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() }))?,
+//     })
+//     .await?;
+//     Ok(())
+// }
+
+async fn announce_site_operation(operation_store: &mut MemoryStore<[u8; 32], Extensions>, log_id: LogId, private_key: &PrivateKey) -> Result<()> {
+    println!("Announcing myself operation");
+
+    let body = None;
+
+    let (header, body) = create_operation(&mut operation_store.clone(), log_id, &private_key, body, false).await;
+
+    let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
+    let header_bytes = header.to_bytes();
+
+    let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &log_id, false).await?;
+
+    match ingest_result {
+        IngestResult::Complete(operation) => {
+            // author_store
+            //     .add_author(Topic::new(log_id), operation.header.public_key)
+            //     .await;
+
+            println!("Announced operation: {:?}", operation);
+        }
+        _ => unreachable!(),
+    }
+
     Ok(())
 }
 
