@@ -4,16 +4,19 @@ use iroh_net::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, RelayUrl, ToNetwork};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, SyncConfiguration, ToNetwork};
+use p2panda_store::MemoryStore;
+use p2panda_sync::log_sync::LogSyncProtocol;
 use rocket::tokio;
 use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use super::messages::Message;
+use super::operations::Extensions;
 use super::site_messages::{SiteMessages, SiteRegistration};
 use super::sites::Sites;
-use super::topics::ChatTopic;
+use super::topics::{AuthorStore, ChatTopic, LogId};
 
 pub struct DirectAddress {
     pub node_id: PublicKey,
@@ -99,6 +102,13 @@ impl P2PandaContainer {
             let DirectAddress { node_id, addresses: _ } = direct_address;
             builder = builder.direct_address(node_id, vec![], None);
         }
+
+        // Setup operations
+        let operation_store = MemoryStore::<LogId, Extensions>::new();
+        let author_store = AuthorStore::new();
+        let sync_protocol = LogSyncProtocol::new(author_store.clone(), operation_store.clone());
+        let sync_config = SyncConfiguration::new(sync_protocol);
+        builder = builder.sync(sync_config);
 
         // Create network
         let network: Network<ChatTopic> = builder.build().await?;
