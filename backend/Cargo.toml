@@ -14,6 +14,7 @@ p2panda-net = { git = "https://github.com/p2panda/p2panda.git" }
 p2panda-core = { git = "https://github.com/p2panda/p2panda.git" }
 p2panda-discovery = { git = "https://github.com/p2panda/p2panda.git" }
 p2panda-store = { git = "https://github.com/p2panda/p2panda.git" }
+p2panda-stream = { git = "https://github.com/p2panda/p2panda.git" }
 gethostname = "0.5.0"
 serde = "1.0.216"
 anyhow = "1.0.94"
