@@ -19,7 +19,10 @@ pub struct NodeDetails {
 #[get("/", format = "json")]
 async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<Option<NodeDetails>>, ThisNodeError> {
     let is_started = panda_container.is_started().await;
+    println!("Getting Panda Node");
+
     if !is_started {
+        println!("Getting Panda Node: not started");
         return Ok(Json(None));
     }
 
