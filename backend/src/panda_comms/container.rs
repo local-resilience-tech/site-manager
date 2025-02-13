@@ -4,11 +4,12 @@ use iroh_net::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, SyncConfiguration, TopicId};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use rocket::tokio;
+use rocket::tokio::sync::mpsc;
 use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -135,10 +136,10 @@ impl P2PandaContainer {
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
-        let (tx, mut rx, _ready) = network.subscribe(topic.clone()).await?;
+        let (network_tx, mut network_rx, _ready) = network.subscribe(topic.clone()).await?;
         let mut sites = Sites::build();
         tokio::task::spawn(async move {
-            while let Some(event) = rx.recv().await {
+            while let Some(event) = network_rx.recv().await {
                 handle_gossip_event(event, &mut sites);
             }
         });
@@ -154,7 +155,7 @@ impl P2PandaContainer {
                 // announce_site_msg(&private_key, &site_name, &tx)
                 //     .await
                 //     .ok();
-                announce_site_operation(&mut operation_store, topic.id(), &private_key)
+                announce_site_operation(&mut operation_store, topic.id(), &private_key, &network_tx)
                     .await
                     .ok();
             }
@@ -224,7 +225,12 @@ fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
 //     Ok(())
 // }
 
-async fn announce_site_operation(operation_store: &mut MemoryStore<[u8; 32], Extensions>, log_id: LogId, private_key: &PrivateKey) -> Result<()> {
+async fn announce_site_operation(
+    operation_store: &mut MemoryStore<[u8; 32], Extensions>,
+    log_id: LogId,
+    private_key: &PrivateKey,
+    network_tx: &mpsc::Sender<ToNetwork>,
+) -> Result<()> {
     println!("Announcing myself operation");
 
     let body = None;
@@ -242,7 +248,17 @@ async fn announce_site_operation(operation_store: &mut MemoryStore<[u8; 32], Ext
             //     .add_author(Topic::new(log_id), operation.header.public_key)
             //     .await;
 
-            println!("Announced operation: {:?}", prepare_for_logging(operation));
+            println!("Ingested operation into store: {:?}", prepare_for_logging(operation));
+
+            if network_tx
+                .send(ToNetwork::Message { bytes: gossip_message_bytes })
+                .await
+                .is_err()
+            {
+                println!("Failed to send gossip message");
+            } else {
+                println!("Sent gossip message");
+            }
         }
         _ => unreachable!(),
     }
