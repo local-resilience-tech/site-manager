@@ -14,7 +14,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use super::messages::Message;
-use super::operations::{create_operation, encode_gossip_message, Extensions};
+use super::operations::{create_operation, encode_gossip_message, prepare_for_logging, Extensions};
 use super::site_messages::SiteMessages;
 use super::sites::Sites;
 use super::topics::{AuthorStore, ChatTopic, LogId};
@@ -242,7 +242,7 @@ async fn announce_site_operation(operation_store: &mut MemoryStore<[u8; 32], Ext
             //     .add_author(Topic::new(log_id), operation.header.public_key)
             //     .await;
 
-            println!("Announced operation: {:?}", operation);
+            println!("Announced operation: {:?}", prepare_for_logging(operation));
         }
         _ => unreachable!(),
     }

@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use p2panda_core::{
     cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError},
-    Body, Header, PrivateKey, PruneFlag,
+    Body, Header, Operation, PrivateKey, PruneFlag,
 };
 use p2panda_store::{LocalLogStore, MemoryStore};
 use serde::{Deserialize, Serialize};
@@ -63,6 +63,26 @@ pub async fn create_operation(
 
 pub fn encode_gossip_message(header: &Header<Extensions>, body: Option<&Body>) -> Result<Vec<u8>, EncodeError> {
     encode_cbor(&(header.to_bytes(), body.map(|body| body.to_bytes())))
+}
+
+#[derive(Debug)]
+pub struct OperationDetails {
+    pub hash: String,
+    pub public_key: String,
+    pub timestamp: u64,
+    pub seq_num: u64,
+}
+
+pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails {
+    let Operation { hash, header, body: _ } = operation;
+    let header = header.clone();
+
+    return OperationDetails {
+        hash: hash.to_string(),
+        public_key: header.public_key.to_string(),
+        timestamp: header.timestamp,
+        seq_num: header.seq_num,
+    };
 }
 
 pub fn decode_gossip_message(bytes: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), DecodeError> {
