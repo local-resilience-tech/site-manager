@@ -1,5 +1,4 @@
-use iroh::NodeAddr;
-use p2panda_net::NodeAddress;
+use iroh::net::NodeAddr;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::{Route, State};
@@ -13,7 +12,7 @@ pub struct NodeDetails {
     pub network_name: String,
     pub panda_node_id: String,
     pub iroh_node_addr: NodeAddr,
-    pub peers: Vec<NodeAddress>,
+    pub peers: Vec<NodeAddr>,
 }
 
 #[get("/", format = "json")]

@@ -1,4 +1,4 @@
-use p2panda_net::NodeAddress;
+use iroh::net::NodeAddr;
 use rocket::serde::json::Json;
 use rocket::{Route, State};
 use rocket_db_pools::Connection;
@@ -27,7 +27,7 @@ async fn show(mut db: Connection<MainDb>, panda_container: &State<P2PandaContain
 
     let network_name = network_name_result.unwrap();
 
-    let peers: Vec<NodeAddress> = panda_container
+    let peers: Vec<NodeAddr> = panda_container
         .known_peers()
         .await
         .map_err(|_| ThisNodeError::InternalServerError("Error finding peers".to_string()))?;
@@ -35,7 +35,7 @@ async fn show(mut db: Connection<MainDb>, panda_container: &State<P2PandaContain
     let nodes: Vec<Node> = peers
         .iter()
         .map(|peer| Node {
-            node_id: peer.public_key.to_string(),
+            node_id: peer.node_id.to_string(),
             site: None,
         })
         .collect();
