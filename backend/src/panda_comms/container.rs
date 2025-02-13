@@ -96,23 +96,37 @@ impl P2PandaContainer {
             .discovery(LocalDiscovery::new());
 
         if let Some(direct_address) = direct_address {
-            let DirectAddress { node_id, addresses } = direct_address;
+            let DirectAddress { node_id, addresses: _ } = direct_address;
             builder = builder.direct_address(node_id, vec![], None);
         }
 
+        // Create network
         let network: Network<ChatTopic> = builder.build().await?;
 
+        self.setup_subscriptions(topic, &network, site_name, private_key)
+            .await?;
+
+        // put the network in the container
+        let mut network_lock = self.network.lock().await;
+        *network_lock = Some(network);
+
+        Ok(())
+    }
+
+    async fn setup_subscriptions(
+        &self,
+        topic: ChatTopic,
+        network: &Network<ChatTopic>,
+        site_name: String,
+        private_key: PrivateKey,
+    ) -> Result<(), anyhow::Error> {
         let (tx, mut rx, _ready) = network.subscribe(topic).await?;
-
         let mut sites = Sites::build();
-
         tokio::task::spawn(async move {
             while let Some(event) = rx.recv().await {
                 handle_gossip_event(event, &mut sites);
             }
         });
-
-        // spawn a task to announce the site every 30 seconds
         tokio::task::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
@@ -122,11 +136,6 @@ impl P2PandaContainer {
                     .ok();
             }
         });
-
-        // put the network in the container
-        let mut network_lock = self.network.lock().await;
-        *network_lock = Some(network);
-
         Ok(())
     }
 
