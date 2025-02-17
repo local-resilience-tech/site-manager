@@ -2,7 +2,7 @@ use anyhow::Result;
 use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
-use p2panda_core::{Hash, PrivateKey, PublicKey};
+use p2panda_core::{Body, Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
@@ -15,7 +15,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use super::messages::Message;
-use super::operations::{create_operation, encode_gossip_message, prepare_for_logging, Extensions};
+use super::operations::{create_header, encode_gossip_message, prepare_for_logging, Extensions};
 use super::site_messages::SiteMessages;
 use super::sites::Sites;
 use super::topics::{AuthorStore, ChatTopic, LogId};
@@ -155,7 +155,7 @@ impl P2PandaContainer {
                 // announce_site_msg(&private_key, &site_name, &tx)
                 //     .await
                 //     .ok();
-                announce_site_operation(&mut operation_store, topic.id(), &private_key, &network_tx)
+                publish_operation(&mut operation_store, topic.id(), &private_key, &network_tx)
                     .await
                     .ok();
             }
@@ -225,7 +225,15 @@ fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
 //     Ok(())
 // }
 
-async fn announce_site_operation(
+// async fn announce_site_operation(
+//     operation_store: &mut MemoryStore<[u8; 32], Extensions>,
+//     log_id: LogId,
+//     private_key: &PrivateKey,
+//     network_tx: &mpsc::Sender<ToNetwork>,
+// ) -> Result<()> {
+// }
+
+async fn publish_operation(
     operation_store: &mut MemoryStore<[u8; 32], Extensions>,
     log_id: LogId,
     private_key: &PrivateKey,
@@ -233,9 +241,10 @@ async fn announce_site_operation(
 ) -> Result<()> {
     println!("Announcing myself operation");
 
-    let body = None;
+    let body_bytes = "hello world".as_bytes();
+    let body: Option<Body> = Some(Body::new(body_bytes));
 
-    let (header, body) = create_operation(&mut operation_store.clone(), log_id, &private_key, body, false).await;
+    let header = create_header(&mut operation_store.clone(), log_id, &private_key, body.clone(), false).await;
 
     let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
     let header_bytes = header.to_bytes();

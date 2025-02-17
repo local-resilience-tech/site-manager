@@ -17,14 +17,13 @@ pub struct Extensions {
     prune_flag: PruneFlag,
 }
 
-pub async fn create_operation(
+pub async fn create_header(
     store: &mut MemoryStore<LogId, Extensions>,
     log_id: LogId,
     private_key: &PrivateKey,
-    body: Option<&[u8]>,
+    maybe_body: Option<Body>,
     prune_flag: bool,
-) -> (Header<Extensions>, Option<Body>) {
-    let body = body.map(Body::new);
+) -> Header<Extensions> {
     let public_key = private_key.public_key();
 
     let Ok(latest_operation) = store.latest_operation(&public_key, &log_id).await;
@@ -48,8 +47,8 @@ pub async fn create_operation(
         version: 1,
         public_key,
         signature: None,
-        payload_size: body.as_ref().map_or(0, |body| body.size()),
-        payload_hash: body.as_ref().map(|body| body.hash()),
+        payload_size: maybe_body.as_ref().map_or(0, |body| body.size()),
+        payload_hash: maybe_body.as_ref().map(|body| body.hash()),
         timestamp,
         seq_num,
         backlink,
@@ -58,7 +57,7 @@ pub async fn create_operation(
     };
     header.sign(private_key);
 
-    (header, body)
+    header
 }
 
 pub fn encode_gossip_message(header: &Header<Extensions>, body: Option<&Body>) -> Result<Vec<u8>, EncodeError> {
