@@ -1,10 +1,10 @@
 use anyhow::Result;
 use gethostname::gethostname;
-use iroh_net::NodeAddr;
+use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, SyncConfiguration, ToNetwork, TopicId};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_sync::log_sync::LogSyncProtocol;
@@ -178,7 +178,7 @@ impl P2PandaContainer {
         node_addr
     }
 
-    pub async fn known_peers(&self) -> Result<Vec<NodeAddr>> {
+    pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
         let network = self.network.lock().await;
         let network = network.as_ref().unwrap();
         return network.known_peers().await;

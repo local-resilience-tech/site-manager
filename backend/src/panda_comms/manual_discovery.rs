@@ -1,5 +1,5 @@
 use anyhow::Result;
-use iroh_net::NodeAddr;
+use iroh::NodeAddr;
 use p2panda_discovery::{BoxedStream, Discovery, DiscoveryEvent};
 
 #[derive(Debug)]

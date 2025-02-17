@@ -5,16 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
-rocket_cors = "0.6.0"
-tokio-util = "0.7.10"
-env_logger = "0.11.2"
-log = "0.4.20"
-p2panda-sync = "0.2.0"
-p2panda-net = "0.2.0"
-p2panda-core = "0.2.0"
-p2panda-discovery = "0.2.0"
-p2panda-store = "0.2.0"
-p2panda-stream = "0.2.0"
+p2panda-sync = { git = "https://github.com/p2panda/p2panda.git" }
+p2panda-net = { git = "https://github.com/p2panda/p2panda.git" }
+p2panda-core = { git = "https://github.com/p2panda/p2panda.git" }
+p2panda-discovery = { git = "https://github.com/p2panda/p2panda.git" }
+p2panda-store = { git = "https://github.com/p2panda/p2panda.git" }
+p2panda-stream = { git = "https://github.com/p2panda/p2panda.git" }
 gethostname = "0.5.0"
 serde = "1.0.216"
 anyhow = "1.0.94"
@@ -25,8 +21,12 @@ sqlx = { version = "0.7.4", features = ["macros", "migrate"] }
 dotenvy = "0.15.7"
 thiserror = "2.0.9"
 uuid = { version = "1.11.0", features = ["v4"] }
-iroh-net = "0.28.0"
+iroh = "0.31.0"
 hex = "0.4.3"
+rocket_cors = "0.6.0"
+tokio-util = "0.7.10"
+env_logger = "0.11.2"
+log = "0.4.20"
 
 [dependencies.rocket]
 version = "0.5.1"
