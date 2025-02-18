@@ -181,7 +181,7 @@ impl P2PandaContainer {
                     let header = operation.0.clone();
 
                     println!(
-                        "Decoded incoming operation: key={:?} timestamp={:?} seq_num={:?}",
+                        "- Decoded incoming operation: key={:?} timestamp={:?} seq_num={:?}",
                         header.public_key.to_string(),
                         header.timestamp,
                         header.seq_num
@@ -189,18 +189,18 @@ impl P2PandaContainer {
                     Some(operation)
                 }
                 Err(err) => {
-                    println!("decode operation error: {err}");
+                    println!("- decode operation error: {err}");
                     None
                 }
             })
             .ingest(operation_store.clone(), 128)
             .filter_map(|result| match result {
                 Ok(operation) => {
-                    println!("Ingested incoming operation");
+                    println!("- Ingested incoming operation");
                     Some(operation)
                 }
                 Err(err) => {
-                    println!("ingest operation error: {err}");
+                    println!("- ingest operation error: {err}");
                     None
                 }
             });
@@ -208,7 +208,7 @@ impl P2PandaContainer {
         {
             task::spawn(async move {
                 while let Some(operation) = stream.next().await {
-                    println!("Received operation: {:?}", prepare_for_logging(operation));
+                    println!("+ Received operation: {:?}", prepare_for_logging(operation));
                 }
             });
         }
