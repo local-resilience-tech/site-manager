@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 
 use p2panda_core::{
-    cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError},
+    cbor::{encode_cbor, EncodeError},
     Body, Header, Operation, PrivateKey, PruneFlag,
 };
 use p2panda_store::{LocalLogStore, MemoryStore};
@@ -64,6 +64,7 @@ pub fn encode_gossip_message(header: &Header<Extensions>, body: Option<&Body>) -
     encode_cbor(&(header.to_bytes(), body.map(|body| body.to_bytes())))
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct OperationDetails {
     pub hash: String,
@@ -84,6 +85,6 @@ pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails
     };
 }
 
-pub fn decode_gossip_message(bytes: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), DecodeError> {
-    decode_cbor(bytes)
-}
+// pub fn decode_gossip_message(bytes: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), DecodeError> {
+//     decode_cbor(bytes)
+// }

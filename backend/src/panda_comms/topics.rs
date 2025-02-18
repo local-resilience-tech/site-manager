@@ -38,19 +38,19 @@ impl AuthorStore {
         Self(Arc::new(RwLock::new(HashMap::new())))
     }
 
-    pub async fn add_author(&mut self, topic: ChatTopic, public_key: PublicKey) {
-        let mut authors = self.0.write().await;
-        authors
-            .entry(topic)
-            .and_modify(|public_keys| {
-                public_keys.insert(public_key);
-            })
-            .or_insert({
-                let mut public_keys = HashSet::new();
-                public_keys.insert(public_key);
-                public_keys
-            });
-    }
+    // pub async fn add_author(&mut self, topic: ChatTopic, public_key: PublicKey) {
+    //     let mut authors = self.0.write().await;
+    //     authors
+    //         .entry(topic)
+    //         .and_modify(|public_keys| {
+    //             public_keys.insert(public_key);
+    //         })
+    //         .or_insert({
+    //             let mut public_keys = HashSet::new();
+    //             public_keys.insert(public_key);
+    //             public_keys
+    //         });
+    // }
 
     pub async fn authors(&self, topic: &ChatTopic) -> Option<HashSet<PublicKey>> {
         let authors = self.0.read().await;

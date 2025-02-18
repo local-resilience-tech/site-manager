@@ -16,7 +16,7 @@ use tokio::sync::Mutex;
 
 use super::messages::Message;
 use super::operations::{create_header, encode_gossip_message, prepare_for_logging, Extensions};
-use super::site_messages::SiteMessages;
+use super::site_messages::{SiteMessages, SiteRegistration};
 use super::sites::Sites;
 use super::topics::{AuthorStore, ChatTopic, LogId};
 
@@ -152,10 +152,9 @@ impl P2PandaContainer {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
-                // announce_site_msg(&private_key, &site_name, &tx)
-                //     .await
-                //     .ok();
-                publish_operation(&mut operation_store, topic.id(), &private_key, &network_tx)
+
+                let body = build_announce_site_body(&site_name);
+                publish_operation(Some(body), &mut operation_store, topic.id(), &private_key, &network_tx)
                     .await
                     .ok();
             }
@@ -191,7 +190,7 @@ fn get_site_name() -> String {
 
 fn handle_gossip_event(event: FromNetwork, sites: &mut Sites) {
     match event {
-        FromNetwork::GossipMessage { bytes, .. } => match Message::decode_and_verify(&bytes) {
+        FromNetwork::GossipMessage { bytes, .. } => match Message::decode(&bytes) {
             Ok(message) => {
                 handle_message(message, sites);
             }
@@ -216,33 +215,21 @@ fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
     }
 }
 
-// async fn announce_site_msg(private_key: &PrivateKey, name: &str, tx: &tokio::sync::mpsc::Sender<ToNetwork>) -> Result<()> {
-//     println!("Announcing myself: {}", name);
-//     tx.send(ToNetwork::Message {
-//         bytes: Message::sign_and_encode(private_key, SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() }))?,
-//     })
-//     .await?;
-//     Ok(())
-// }
+fn build_announce_site_body(name: &str) -> Body {
+    let message = SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() });
+    let bytes = Message::encode(message).unwrap();
 
-// async fn announce_site_operation(
-//     operation_store: &mut MemoryStore<[u8; 32], Extensions>,
-//     log_id: LogId,
-//     private_key: &PrivateKey,
-//     network_tx: &mpsc::Sender<ToNetwork>,
-// ) -> Result<()> {
-// }
+    Body::new(&bytes)
+}
 
 async fn publish_operation(
+    body: Option<Body>,
     operation_store: &mut MemoryStore<[u8; 32], Extensions>,
     log_id: LogId,
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,
 ) -> Result<()> {
     println!("Announcing myself operation");
-
-    let body_bytes = "hello world".as_bytes();
-    let body: Option<Body> = Some(Body::new(body_bytes));
 
     let header = create_header(&mut operation_store.clone(), log_id, &private_key, body.clone(), false).await;
 
