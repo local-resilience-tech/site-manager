@@ -151,30 +151,42 @@ impl P2PandaContainer {
         let stream = ReceiverStream::new(network_rx);
         let stream = stream.filter_map(|event| match event {
             FromNetwork::GossipMessage { bytes, .. } => match decode_gossip_message(&bytes) {
-                Ok(result) => Some(result),
+                Ok(result) => {
+                    println!("Got gossip message: {:?}", result);
+                    Some(result)
+                }
                 Err(err) => {
-                    warn!("could not decode gossip message: {err}");
+                    println!("could not decode gossip message: {err}");
                     None
                 }
             },
-            FromNetwork::SyncMessage { header, payload, .. } => Some((header, payload)),
+            FromNetwork::SyncMessage { header, payload, .. } => {
+                println!("Got network message.");
+                Some((header, payload))
+            }
         });
 
         // Decode and ingest the p2panda operations.
         let mut stream = stream
             .decode()
             .filter_map(|result| match result {
-                Ok(operation) => Some(operation),
+                Ok(operation) => {
+                    println!("Decoded incoming operation");
+                    Some(operation)
+                }
                 Err(err) => {
-                    warn!("decode operation error: {err}");
+                    println!("decode operation error: {err}");
                     None
                 }
             })
             .ingest(operation_store.clone(), 128)
             .filter_map(|result| match result {
-                Ok(operation) => Some(operation),
+                Ok(operation) => {
+                    println!("Ingested incoming operation");
+                    Some(operation)
+                }
                 Err(err) => {
-                    warn!("ingest operation error: {err}");
+                    println!("ingest operation error: {err}");
                     None
                 }
             });
@@ -186,12 +198,6 @@ impl P2PandaContainer {
                 }
             });
         }
-
-        // task::spawn(async move {
-        //     while let Some(event) = network_rx.recv().await {
-        //         handle_gossip_event(event, &mut sites);
-        //     }
-        // });
 
         let mut operation_store = operation_store.clone();
         let topic = topic.clone();
@@ -293,7 +299,7 @@ async fn publish_operation(
             //     .add_author(Topic::new(log_id), operation.header.public_key)
             //     .await;
 
-            println!("Ingested operation into store: {:?}", prepare_for_logging(operation));
+            println!("Publish Operation - ingested into own store: {:?}", prepare_for_logging(operation));
 
             if network_tx
                 .send(ToNetwork::Message { bytes: gossip_message_bytes })
@@ -302,7 +308,7 @@ async fn publish_operation(
             {
                 println!("Failed to send gossip message");
             } else {
-                println!("Sent gossip message");
+                println!("Publish Operation - Sent gossip message");
             }
         }
         _ => unreachable!(),
