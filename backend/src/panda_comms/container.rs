@@ -7,17 +7,19 @@ use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
+use p2panda_stream::{DecodeExt, IngestExt};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use rocket::tokio::sync::mpsc;
 use rocket::tokio::{self, task};
 use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 use super::messages::Message;
-use super::operations::{create_header, encode_gossip_message, prepare_for_logging, Extensions};
+use super::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging, CustomExtensions};
 use super::site_messages::{SiteMessages, SiteRegistration};
-use super::sites::Sites;
+// use super::sites::Sites;
 use super::topics::{AuthorStore, ChatTopic, LogId};
 
 pub struct DirectAddress {
@@ -109,7 +111,7 @@ impl P2PandaContainer {
         }
 
         // Setup operations
-        let operation_store = MemoryStore::<LogId, Extensions>::new();
+        let operation_store = MemoryStore::<LogId, CustomExtensions>::new();
         let author_store = AuthorStore::new();
         let sync_protocol = LogSyncProtocol::new(author_store.clone(), operation_store.clone());
         let sync_config = SyncConfiguration::new(sync_protocol);
@@ -132,11 +134,11 @@ impl P2PandaContainer {
         &self,
         topic: ChatTopic,
         network: &Network<ChatTopic>,
-        operation_store: MemoryStore<[u8; 32], Extensions>,
+        operation_store: MemoryStore<[u8; 32], CustomExtensions>,
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
-        let (network_tx, mut network_rx, gossip_ready) = network.subscribe(topic.clone()).await?;
+        let (network_tx, network_rx, gossip_ready) = network.subscribe(topic.clone()).await?;
 
         task::spawn(async move {
             if gossip_ready.await.is_ok() {
@@ -144,12 +146,52 @@ impl P2PandaContainer {
             }
         });
 
-        let mut sites = Sites::build();
-        task::spawn(async move {
-            while let Some(event) = network_rx.recv().await {
-                handle_gossip_event(event, &mut sites);
-            }
+        // let mut sites = Sites::build();
+
+        let stream = ReceiverStream::new(network_rx);
+        let stream = stream.filter_map(|event| match event {
+            FromNetwork::GossipMessage { bytes, .. } => match decode_gossip_message(&bytes) {
+                Ok(result) => Some(result),
+                Err(err) => {
+                    warn!("could not decode gossip message: {err}");
+                    None
+                }
+            },
+            FromNetwork::SyncMessage { header, payload, .. } => Some((header, payload)),
         });
+
+        // Decode and ingest the p2panda operations.
+        let mut stream = stream
+            .decode()
+            .filter_map(|result| match result {
+                Ok(operation) => Some(operation),
+                Err(err) => {
+                    warn!("decode operation error: {err}");
+                    None
+                }
+            })
+            .ingest(operation_store.clone(), 128)
+            .filter_map(|result| match result {
+                Ok(operation) => Some(operation),
+                Err(err) => {
+                    warn!("ingest operation error: {err}");
+                    None
+                }
+            });
+
+        {
+            task::spawn(async move {
+                while let Some(operation) = stream.next().await {
+                    println!("Received operation: {:?}", prepare_for_logging(operation));
+                }
+            });
+        }
+
+        // task::spawn(async move {
+        //     while let Some(event) = network_rx.recv().await {
+        //         handle_gossip_event(event, &mut sites);
+        //     }
+        // });
 
         let mut operation_store = operation_store.clone();
         let topic = topic.clone();
@@ -195,32 +237,32 @@ fn get_site_name() -> String {
     gethostname().to_string_lossy().to_string()
 }
 
-fn handle_gossip_event(event: FromNetwork, sites: &mut Sites) {
-    match event {
-        FromNetwork::GossipMessage { bytes, .. } => match Message::decode(&bytes) {
-            Ok(message) => {
-                handle_message(message, sites);
-            }
-            Err(err) => {
-                eprintln!("Invalid gossip message: {}", err);
-            }
-        },
-        _ => panic!("no sync messages expected"),
-    }
-}
+// fn handle_gossip_event(event: FromNetwork, sites: &mut Sites) {
+//     match event {
+//         FromNetwork::GossipMessage { bytes, .. } => match Message::decode(&bytes) {
+//             Ok(message) => {
+//                 handle_message(message, sites);
+//             }
+//             Err(err) => {
+//                 eprintln!("Invalid gossip message: {}", err);
+//             }
+//         },
+//         _ => panic!("no sync messages expected"),
+//     }
+// }
 
-fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
-    match message.payload {
-        SiteMessages::SiteRegistration(registration) => {
-            println!("Received SiteRegistration: {:?}", registration);
-            sites.register(registration.name);
-            sites.log();
-        }
-        SiteMessages::SiteNotification(notification) => {
-            println!("Received SiteNotification: {:?}", notification);
-        }
-    }
-}
+// fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
+//     match message.payload {
+//         SiteMessages::SiteRegistration(registration) => {
+//             println!("Received SiteRegistration: {:?}", registration);
+//             sites.register(registration.name);
+//             sites.log();
+//         }
+//         SiteMessages::SiteNotification(notification) => {
+//             println!("Received SiteNotification: {:?}", notification);
+//         }
+//     }
+// }
 
 fn build_announce_site_body(name: &str) -> Body {
     let message = SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() });
@@ -231,7 +273,7 @@ fn build_announce_site_body(name: &str) -> Body {
 
 async fn publish_operation(
     body: Option<Body>,
-    operation_store: &mut MemoryStore<[u8; 32], Extensions>,
+    operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
     log_id: LogId,
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,

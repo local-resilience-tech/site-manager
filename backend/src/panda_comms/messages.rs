@@ -1,5 +1,5 @@
 use anyhow::Result;
-use p2panda_core::cbor::{decode_cbor, encode_cbor, EncodeError};
+use p2panda_core::cbor::{encode_cbor, EncodeError};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -13,11 +13,11 @@ impl<Payload: Serialize> Message<Payload> {
         encode_cbor(&message)
     }
 
-    pub fn decode<'a>(bytes: &'a [u8]) -> Result<Message<Payload>>
-    where
-        for<'de> Payload: Deserialize<'de>,
-    {
-        let message: Message<Payload> = decode_cbor(bytes)?;
-        Ok(message)
-    }
+    // pub fn decode<'a>(bytes: &'a [u8]) -> Result<Message<Payload>>
+    // where
+    //     for<'de> Payload: Deserialize<'de>,
+    // {
+    //     let message: Message<Payload> = decode_cbor(bytes)?;
+    //     Ok(message)
+    // }
 }

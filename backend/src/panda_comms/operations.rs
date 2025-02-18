@@ -1,8 +1,8 @@
 use std::time::SystemTime;
 
 use p2panda_core::{
-    cbor::{encode_cbor, EncodeError},
-    Body, Header, Operation, PrivateKey, PruneFlag,
+    cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError},
+    Body, Extension, Header, Operation, PrivateKey, PruneFlag,
 };
 use p2panda_store::{LocalLogStore, MemoryStore};
 use serde::{Deserialize, Serialize};
@@ -10,20 +10,40 @@ use serde::{Deserialize, Serialize};
 use super::topics::LogId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Extensions {
+pub struct CustomExtensions {
     log_id: LogId,
 
     #[serde(rename = "prune", skip_serializing_if = "PruneFlag::is_not_set", default = "PruneFlag::default")]
     prune_flag: PruneFlag,
 }
 
+impl Extension<LogId> for CustomExtensions {
+    fn extract(header: &Header<Self>) -> Option<LogId> {
+        let Some(extensions) = header.extensions.as_ref() else {
+            return None;
+        };
+
+        Some(extensions.log_id.clone())
+    }
+}
+
+impl Extension<PruneFlag> for CustomExtensions {
+    fn extract(header: &Header<Self>) -> Option<PruneFlag> {
+        let Some(extensions) = header.extensions.as_ref() else {
+            return None;
+        };
+
+        Some(extensions.prune_flag.clone())
+    }
+}
+
 pub async fn create_header(
-    store: &mut MemoryStore<LogId, Extensions>,
+    store: &mut MemoryStore<LogId, CustomExtensions>,
     log_id: LogId,
     private_key: &PrivateKey,
     maybe_body: Option<Body>,
     prune_flag: bool,
-) -> Header<Extensions> {
+) -> Header<CustomExtensions> {
     let public_key = private_key.public_key();
 
     let Ok(latest_operation) = store.latest_operation(&public_key, &log_id).await;
@@ -38,7 +58,7 @@ pub async fn create_header(
         .expect("time from operation system")
         .as_secs();
 
-    let extensions = Extensions {
+    let extensions = CustomExtensions {
         log_id,
         prune_flag: PruneFlag::new(prune_flag),
     };
@@ -60,7 +80,7 @@ pub async fn create_header(
     header
 }
 
-pub fn encode_gossip_message(header: &Header<Extensions>, body: Option<&Body>) -> Result<Vec<u8>, EncodeError> {
+pub fn encode_gossip_message(header: &Header<CustomExtensions>, body: Option<&Body>) -> Result<Vec<u8>, EncodeError> {
     encode_cbor(&(header.to_bytes(), body.map(|body| body.to_bytes())))
 }
 
@@ -73,7 +93,7 @@ pub struct OperationDetails {
     pub seq_num: u64,
 }
 
-pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails {
+pub fn prepare_for_logging(operation: Operation<CustomExtensions>) -> OperationDetails {
     let Operation { hash, header, body: _ } = operation;
     let header = header.clone();
 
@@ -85,6 +105,6 @@ pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails
     };
 }
 
-// pub fn decode_gossip_message(bytes: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), DecodeError> {
-//     decode_cbor(bytes)
-// }
+pub fn decode_gossip_message(bytes: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), DecodeError> {
+    decode_cbor(bytes)
+}
