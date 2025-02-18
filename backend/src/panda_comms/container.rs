@@ -140,7 +140,7 @@ impl P2PandaContainer {
 
         task::spawn(async move {
             if gossip_ready.await.is_ok() {
-                debug!("joined gossip overlay");
+                println!("- Joined gossip overlay");
             }
         });
 
