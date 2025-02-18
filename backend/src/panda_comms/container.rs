@@ -8,8 +8,8 @@ use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, 
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_sync::log_sync::LogSyncProtocol;
-use rocket::tokio;
 use rocket::tokio::sync::mpsc;
+use rocket::tokio::{self, task};
 use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -136,9 +136,16 @@ impl P2PandaContainer {
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
-        let (network_tx, mut network_rx, _ready) = network.subscribe(topic.clone()).await?;
+        let (network_tx, mut network_rx, gossip_ready) = network.subscribe(topic.clone()).await?;
+
+        task::spawn(async move {
+            if gossip_ready.await.is_ok() {
+                debug!("joined gossip overlay");
+            }
+        });
+
         let mut sites = Sites::build();
-        tokio::task::spawn(async move {
+        task::spawn(async move {
             while let Some(event) = network_rx.recv().await {
                 handle_gossip_event(event, &mut sites);
             }
@@ -148,7 +155,7 @@ impl P2PandaContainer {
         let topic = topic.clone();
 
         // spawn a task to announce the site every 30 seconds
-        tokio::task::spawn(async move {
+        task::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
             loop {
                 interval.tick().await;
