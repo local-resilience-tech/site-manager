@@ -140,11 +140,18 @@ impl P2PandaContainer {
     ) -> Result<(), anyhow::Error> {
         let (network_tx, network_rx, gossip_ready) = network.subscribe(topic.clone()).await?;
 
-        task::spawn(async move {
-            if gossip_ready.await.is_ok() {
-                println!("- Joined gossip overlay");
-            }
-        });
+        {
+            let mut operation_store = operation_store.clone();
+            let topic = topic.clone();
+
+            task::spawn(async move {
+                if gossip_ready.await.is_ok() {
+                    println!("- JOINED GOSSIP NETWORK -");
+
+                    announce_site_regularly(site_name, &mut operation_store, topic.id(), &private_key, &network_tx);
+                }
+            });
+        }
 
         // let mut sites = Sites::build();
 
@@ -152,7 +159,7 @@ impl P2PandaContainer {
         let stream = stream.filter_map(|event| match event {
             FromNetwork::GossipMessage { bytes, .. } => match decode_gossip_message(&bytes) {
                 Ok(result) => {
-                    println!("Got gossip message: {:?}", result);
+                    println!("Got gossip message");
                     Some(result)
                 }
                 Err(err) => {
@@ -171,7 +178,14 @@ impl P2PandaContainer {
             .decode()
             .filter_map(|result| match result {
                 Ok(operation) => {
-                    println!("Decoded incoming operation");
+                    let header = operation.0.clone();
+
+                    println!(
+                        "Decoded incoming operation: key={:?} timestamp={:?} seq_num={:?}",
+                        header.public_key.to_string(),
+                        header.timestamp,
+                        header.seq_num
+                    );
                     Some(operation)
                 }
                 Err(err) => {
@@ -199,21 +213,8 @@ impl P2PandaContainer {
             });
         }
 
-        let mut operation_store = operation_store.clone();
-        let topic = topic.clone();
+        // announce_site_regularly(site_name, &mut operation_store, topic.id(), &private_key, &network_tx);
 
-        // spawn a task to announce the site every 30 seconds
-        task::spawn(async move {
-            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
-            loop {
-                interval.tick().await;
-
-                let body = build_announce_site_body(&site_name);
-                publish_operation(Some(body), &mut operation_store, topic.id(), &private_key, &network_tx)
-                    .await
-                    .ok();
-            }
-        });
         Ok(())
     }
 
@@ -237,6 +238,31 @@ impl P2PandaContainer {
         let network = network.as_ref().unwrap();
         return network.known_peers().await;
     }
+}
+
+fn announce_site_regularly(
+    site_name: String,
+    operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
+    log_id: LogId,
+    private_key: &PrivateKey,
+    network_tx: &mpsc::Sender<ToNetwork>,
+) {
+    let mut operation_store = operation_store.clone();
+    let private_key = private_key.clone();
+    let network_tx = network_tx.clone();
+
+    // spawn a task to announce the site every 30 seconds
+    task::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+        loop {
+            interval.tick().await;
+
+            let body = build_announce_site_body(&site_name);
+            publish_operation(Some(body), &mut operation_store, log_id, &private_key, &network_tx)
+                .await
+                .ok();
+        }
+    });
 }
 
 fn get_site_name() -> String {
@@ -284,8 +310,6 @@ async fn publish_operation(
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,
 ) -> Result<()> {
-    println!("Announcing myself operation");
-
     let header = create_header(&mut operation_store.clone(), log_id, &private_key, body.clone(), false).await;
 
     let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
@@ -299,8 +323,6 @@ async fn publish_operation(
             //     .add_author(Topic::new(log_id), operation.header.public_key)
             //     .await;
 
-            println!("Publish Operation - ingested into own store: {:?}", prepare_for_logging(operation));
-
             if network_tx
                 .send(ToNetwork::Message { bytes: gossip_message_bytes })
                 .await
@@ -308,7 +330,7 @@ async fn publish_operation(
             {
                 println!("Failed to send gossip message");
             } else {
-                println!("Publish Operation - Sent gossip message");
+                println!("  Publish Operation - Sent gossip message: {:?}", prepare_for_logging(operation));
             }
         }
         _ => unreachable!(),
