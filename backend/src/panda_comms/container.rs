@@ -108,6 +108,10 @@ impl P2PandaContainer {
         if let Some(direct_address) = direct_address {
             let DirectAddress { node_id, _addresses: _ } = direct_address;
             builder = builder.direct_address(node_id, vec![], None);
+        } else {
+            // I am probably the bootstrap node since I know of no others
+            println!("P2Panda: No direct address provided, starting as bootstrap node");
+            builder = builder.bootstrap();
         }
 
         // Setup operations
@@ -145,10 +149,11 @@ impl P2PandaContainer {
             let topic = topic.clone();
 
             task::spawn(async move {
+                announce_site_regularly(site_name, &mut operation_store, topic.id(), &private_key, &network_tx);
                 if gossip_ready.await.is_ok() {
                     println!("- JOINED GOSSIP NETWORK -");
 
-                    announce_site_regularly(site_name, &mut operation_store, topic.id(), &private_key, &network_tx);
+                    // announce_site_regularly(site_name, &mut operation_store, topic.id(), &private_key, &network_tx);
                 }
             });
         }
