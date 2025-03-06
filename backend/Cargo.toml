@@ -1,6 +1,6 @@
 [package]
 name = "site-manager"
-version = "0.2.16"
+version = "0.3.0"
 edition = "2021"
 publish = false
 
