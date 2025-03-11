@@ -4,7 +4,7 @@ use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Body, Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, SyncConfiguration, ToNetwork, TopicId};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, RelayUrl, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_stream::{DecodeExt, IngestExt};
@@ -33,6 +33,10 @@ pub struct P2PandaContainer {
     private_key: Arc<Mutex<Option<PrivateKey>>>,
     pub network: Arc<Mutex<Option<Network<ChatTopic>>>>,
 }
+
+// This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
+// production use, and LoRes tech will eventually provide a relay node for production use.
+const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 
 impl P2PandaContainer {
     pub async fn set_network_name(&self, network_name: String) {
@@ -94,6 +98,8 @@ impl P2PandaContainer {
 
         let network_id: NetworkId = Hash::new(network_name).into();
 
+        let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
+
         let topic = ChatTopic::new("site_management");
 
         // Bootstrap node details
@@ -103,11 +109,13 @@ impl P2PandaContainer {
 
         let mut builder = NetworkBuilder::new(network_id)
             .private_key(private_key.clone())
+            .relay(relay_url.clone(), false, 0)
             .discovery(LocalDiscovery::new());
 
         if let Some(direct_address) = direct_address {
             let DirectAddress { node_id, _addresses: _ } = direct_address;
-            builder = builder.direct_address(node_id, vec![], None);
+            println!("P2Panda: Direct address provided for peer: {}", node_id);
+            builder = builder.direct_address(node_id, vec![], Some(relay_url));
         } else {
             // I am probably the bootstrap node since I know of no others
             println!("P2Panda: No direct address provided, starting as bootstrap node");
