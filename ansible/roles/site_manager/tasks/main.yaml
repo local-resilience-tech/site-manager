@@ -7,12 +7,18 @@
         site-manager:
           image: ghcr.io/local-resilience-tech/site-manager:latest
           ports:
-            - "2022:2022/udp"
-            - "2023:2023/udp"
-            - "80:80"
-          network_mode: "host"
-          # networks:
-          #   - proxy
+            - target: 2022
+              published: 2022
+              protocol: udp
+              mode: host
+            - target: 2023
+              published: 2023
+              protocol: udp
+              mode: host
+            # - target: 80
+            #   published: 80
+          networks:
+            - proxy
           deploy:
             replicas: 1
             restart_policy:
@@ -32,6 +38,6 @@
           #   timeout: 20s
           #   retries: 3
 
-      # networks:
-      #   proxy:
-      #     external: true
+      networks:
+        proxy:
+          external: true
