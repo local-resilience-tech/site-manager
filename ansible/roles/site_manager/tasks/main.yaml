@@ -17,6 +17,10 @@
               mode: host
             # - target: 80
             #   published: 80
+          environment:
+            DATABASE_URL: "sqlite:/data/site-manager.db"
+          volumes:
+            - data:/data
           networks:
             - proxy
           deploy:
@@ -41,3 +45,6 @@
       networks:
         proxy:
           external: true
+
+      volumes:
+        data:

@@ -1,7 +1,14 @@
 services:
   site-manager:
     image: resilientlocaltech/site-manager
+    environment:
+      DATABASE_URL: "sqlite:/data/site-manager.db"
+    volumes:
+      - data:/data
     ports:
       - "8000:8000"
       - "2022:2022/udp"
       - "2023:2023/udp"
+
+volumes:
+  data:
