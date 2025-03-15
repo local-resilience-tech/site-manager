@@ -132,7 +132,7 @@ impl P2PandaContainer {
         // Create network
         let network: Network<ChatTopic> = builder.build().await?;
 
-        self.setup_subscriptions(topic, &network, operation_store.clone(), &author_log_map, site_name, private_key)
+        self.setup_subscriptions(topic, &network, operation_store.clone(), author_log_map, site_name, private_key)
             .await?;
 
         // put the network in the container
@@ -147,7 +147,7 @@ impl P2PandaContainer {
         topic: ChatTopic,
         network: &Network<ChatTopic>,
         operation_store: MemoryStore<[u8; 32], CustomExtensions>,
-        author_log_map: &AuthorLogMap,
+        author_log_map: AuthorLogMap,
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
@@ -159,7 +159,7 @@ impl P2PandaContainer {
             let topic = topic.clone();
 
             task::spawn(async move {
-                announce_site_regularly(site_name, &mut operation_store, &mut author_log_map, topic, &private_key, &network_tx);
+                announce_site_regularly(site_name, &mut operation_store, &mut author_log_map, topic, &private_key, &network_tx).await;
                 if gossip_ready.await.is_ok() {
                     println!("- JOINED GOSSIP NETWORK -");
 
@@ -221,8 +221,15 @@ impl P2PandaContainer {
             });
 
         {
+            let mut author_log_map = author_log_map.clone();
+            let topic = topic.clone();
+
             task::spawn(async move {
                 while let Some(operation) = stream.next().await {
+                    author_log_map
+                        .add_author(topic.clone(), operation.header.public_key)
+                        .await;
+
                     println!("+ Received operation: {:?}", prepare_for_logging(operation));
                 }
             });
@@ -253,7 +260,7 @@ impl P2PandaContainer {
     }
 }
 
-fn announce_site_regularly(
+async fn announce_site_regularly(
     site_name: String,
     operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
     author_log_map: &AuthorLogMap,
@@ -290,33 +297,6 @@ fn announce_site_regularly(
 fn get_site_name() -> String {
     gethostname().to_string_lossy().to_string()
 }
-
-// fn handle_gossip_event(event: FromNetwork, sites: &mut Sites) {
-//     match event {
-//         FromNetwork::GossipMessage { bytes, .. } => match Message::decode(&bytes) {
-//             Ok(message) => {
-//                 handle_message(message, sites);
-//             }
-//             Err(err) => {
-//                 eprintln!("Invalid gossip message: {}", err);
-//             }
-//         },
-//         _ => panic!("no sync messages expected"),
-//     }
-// }
-
-// fn handle_message(message: Message<SiteMessages>, sites: &mut Sites) {
-//     match message.payload {
-//         SiteMessages::SiteRegistration(registration) => {
-//             println!("Received SiteRegistration: {:?}", registration);
-//             sites.register(registration.name);
-//             sites.log();
-//         }
-//         SiteMessages::SiteNotification(notification) => {
-//             println!("Received SiteNotification: {:?}", notification);
-//         }
-//     }
-// }
 
 fn build_announce_site_body(name: &str) -> Body {
     let message = SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() });
