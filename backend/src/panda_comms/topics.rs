@@ -31,26 +31,27 @@ impl TopicId for ChatTopic {
 }
 
 #[derive(Clone, Debug)]
-pub struct AuthorStore(Arc<RwLock<HashMap<ChatTopic, HashSet<PublicKey>>>>);
+pub struct AuthorLogMap(Arc<RwLock<HashMap<ChatTopic, HashSet<PublicKey>>>>);
 
-impl AuthorStore {
+impl AuthorLogMap {
     pub fn new() -> Self {
         Self(Arc::new(RwLock::new(HashMap::new())))
     }
 
-    // pub async fn add_author(&mut self, topic: ChatTopic, public_key: PublicKey) {
-    //     let mut authors = self.0.write().await;
-    //     authors
-    //         .entry(topic)
-    //         .and_modify(|public_keys| {
-    //             public_keys.insert(public_key);
-    //         })
-    //         .or_insert({
-    //             let mut public_keys = HashSet::new();
-    //             public_keys.insert(public_key);
-    //             public_keys
-    //         });
-    // }
+    pub async fn add_author(&mut self, topic: ChatTopic, public_key: PublicKey) {
+        println!("Adding author {:?} to topic {:?}", public_key.to_hex(), topic.0);
+        let mut authors = self.0.write().await;
+        authors
+            .entry(topic)
+            .and_modify(|public_keys| {
+                public_keys.insert(public_key);
+            })
+            .or_insert({
+                let mut public_keys = HashSet::new();
+                public_keys.insert(public_key);
+                public_keys
+            });
+    }
 
     pub async fn authors(&self, topic: &ChatTopic) -> Option<HashSet<PublicKey>> {
         let authors = self.0.read().await;
@@ -59,7 +60,7 @@ impl AuthorStore {
 }
 
 #[async_trait]
-impl TopicLogMap<ChatTopic, LogId> for AuthorStore {
+impl TopicLogMap<ChatTopic, LogId> for AuthorLogMap {
     /// During sync other peers are interested in all our append-only logs for a certain topic.
     /// This method tells the sync protocol which logs we have available from which author for that
     /// given topic.
