@@ -2,13 +2,11 @@ use anyhow::Result;
 use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
-use p2panda_core::{Body, Hash, PrivateKey, PublicKey};
-use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{FromNetwork, Network, NetworkBuilder, NetworkId, NodeAddress, RelayUrl, SyncConfiguration, ToNetwork, TopicId};
+use p2panda_core::{Body, PrivateKey, PublicKey};
+use p2panda_net::{FromNetwork, NodeAddress, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_stream::{DecodeExt, IngestExt};
-use p2panda_sync::log_sync::LogSyncProtocol;
 use rocket::tokio::sync::mpsc;
 use rocket::tokio::{self, task};
 use std::net::{SocketAddr, SocketAddrV4};
@@ -34,10 +32,6 @@ pub struct P2PandaContainer {
     private_key: Arc<Mutex<Option<PrivateKey>>>,
     node: Arc<Mutex<Option<Node<ChatTopic>>>>,
 }
-
-// This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
-// production use, and LoRes tech will eventually provide a relay node for production use.
-const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 
 impl P2PandaContainer {
     pub async fn set_network_name(&self, network_name: String) {
@@ -95,53 +89,23 @@ impl P2PandaContainer {
     }
 
     async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, direct_address: Option<DirectAddress>) -> Result<()> {
-        println!("P2Panda: Starting network: {}", network_name);
-
-        let network_id: NetworkId = Hash::new(network_name).into();
-
-        let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
+        let boostrap_node_id = direct_address.map(|da| da.node_id);
+        let author_log_map = AuthorLogMap::new();
+        let operation_store = MemoryStore::<LogId, CustomExtensions>::new();
+        let node = Node::new(
+            network_name,
+            private_key.clone(),
+            boostrap_node_id,
+            author_log_map.clone(),
+            operation_store.clone(),
+        )
+        .await?;
 
         let topic = ChatTopic::new("site_management");
-
-        // Bootstrap node details
-        // let node_id = build_public_key_from_hex("073912eccc459a93f71b998373097d6e6bdd96ccffdab9be4d3da6ac6358030a".to_string()).unwrap();
-        // let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(170, 64, 151, 138), 2022));
-        // let addresses: Vec<SocketAddr> = vec![addr];
-
-        let mut builder = NetworkBuilder::new(network_id)
-            .private_key(private_key.clone())
-            .relay(relay_url.clone(), false, 0)
-            .discovery(LocalDiscovery::new());
-
-        if let Some(direct_address) = direct_address {
-            let DirectAddress { node_id, _addresses: _ } = direct_address;
-            println!("P2Panda: Direct address provided for peer: {}", node_id);
-            builder = builder.direct_address(node_id, vec![], Some(relay_url));
-        } else {
-            // I am probably the bootstrap node since I know of no others
-            println!("P2Panda: No direct address provided, starting as bootstrap node");
-            builder = builder.bootstrap();
-        }
-
-        // Setup operations
-        let operation_store = MemoryStore::<LogId, CustomExtensions>::new();
-        let author_log_map = AuthorLogMap::new();
-        let sync_protocol = LogSyncProtocol::new(author_log_map.clone(), operation_store.clone());
-        let sync_config = SyncConfiguration::new(sync_protocol);
-        builder = builder.sync(sync_config);
-
-        // Create network
-        let network: Network<ChatTopic> = builder.build().await?;
-
-        self.setup_subscriptions(topic, &network, operation_store.clone(), author_log_map, site_name, private_key)
+        self.setup_subscriptions(topic, &node, operation_store, author_log_map, site_name, private_key)
             .await?;
 
-        // put the network in the container
-        // let mut network_lock = self.network.lock().await;
-        // *network_lock = Some(network);
-
         // put the node in the container
-        let node = Node::new(network.clone());
         let mut node_lock = self.node.lock().await;
         *node_lock = Some(node);
 
@@ -151,13 +115,13 @@ impl P2PandaContainer {
     async fn setup_subscriptions(
         &self,
         topic: ChatTopic,
-        network: &Network<ChatTopic>,
+        node: &Node<ChatTopic>,
         operation_store: MemoryStore<[u8; 32], CustomExtensions>,
         author_log_map: AuthorLogMap,
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
-        let (network_tx, network_rx, gossip_ready) = network.subscribe(topic.clone()).await?;
+        let (network_tx, network_rx, gossip_ready) = node.subscribe(topic.clone()).await?;
 
         {
             let mut operation_store = operation_store.clone();
