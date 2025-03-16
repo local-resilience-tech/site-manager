@@ -24,30 +24,48 @@ use super::topics::{AuthorLogMap, ChatTopic};
 
 #[derive(Default)]
 pub struct P2PandaContainer {
-    network_name: Arc<Mutex<Option<String>>>,
-    private_key: Arc<Mutex<Option<PrivateKey>>>,
+    params: Arc<Mutex<NodeParams>>,
     node: Arc<Mutex<Option<Node<ChatTopic>>>>,
 }
 
+#[derive(Default)]
+pub struct NodeParams {
+    pub private_key: PrivateKey,
+    pub network_name: String,
+    pub bootstrap_node_id: Option<PublicKey>,
+}
+
 impl P2PandaContainer {
+    pub async fn set_params(&self, private_key: PrivateKey, network_name: String, bootstrap_node_id: Option<PublicKey>) {
+        let mut params_lock = self.params.lock().await;
+        params_lock.private_key = private_key;
+        params_lock.network_name = network_name;
+        params_lock.bootstrap_node_id = bootstrap_node_id;
+    }
+
     pub async fn set_network_name(&self, network_name: String) {
-        let mut network_name_lock = self.network_name.lock().await;
-        *network_name_lock = Some(network_name);
+        let mut params_lock = self.params.lock().await;
+        params_lock.network_name = network_name;
     }
 
     pub async fn get_network_name(&self) -> Option<String> {
-        let network_name_lock = self.network_name.lock().await;
-        network_name_lock.clone().or(None)
-    }
-
-    pub async fn set_private_key(&self, private_key: PrivateKey) {
-        let mut private_key_lock = self.private_key.lock().await;
-        *private_key_lock = Some(private_key);
+        let params_lock = self.params.lock().await;
+        Some(params_lock.network_name.clone())
     }
 
     pub async fn get_private_key(&self) -> Option<PrivateKey> {
-        let private_key_lock = self.private_key.lock().await;
-        private_key_lock.clone().or(None)
+        let params_lock = self.params.lock().await;
+        Some(params_lock.private_key.clone())
+    }
+
+    pub async fn set_bootstrap_node_id(&self, bootstrap_node_id: Option<PublicKey>) {
+        let mut params_lock = self.params.lock().await;
+        params_lock.bootstrap_node_id = bootstrap_node_id;
+    }
+
+    pub async fn get_bootstrap_node_id(&self) -> Option<PublicKey> {
+        let params_lock = self.params.lock().await;
+        params_lock.bootstrap_node_id.clone()
     }
 
     pub async fn restart(&self) -> Result<()> {
@@ -68,12 +86,13 @@ impl P2PandaContainer {
         Ok(())
     }
 
-    pub async fn start(&self, boostrap_node_id: Option<PublicKey>) -> Result<()> {
+    pub async fn start(&self) -> Result<()> {
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
 
         let private_key: Option<PrivateKey> = self.get_private_key().await;
         let network_name: Option<String> = self.get_network_name().await;
+        let boostrap_node_id: Option<PublicKey> = self.get_bootstrap_node_id().await;
 
         if private_key.is_none() {
             println!("P2Panda: No private key found, not starting network");

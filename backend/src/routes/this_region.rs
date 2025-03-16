@@ -56,9 +56,12 @@ async fn bootstrap(
         Some(bootstrap) => build_public_key_from_hex(bootstrap.node_id.clone()),
         None => None,
     };
+    panda_container
+        .set_bootstrap_node_id(bootstrap_node_id)
+        .await;
 
     // start the container
-    if let Err(e) = panda_container.start(bootstrap_node_id).await {
+    if let Err(e) = panda_container.start().await {
         println!("Failed to start P2PandaContainer: {:?}", e);
     }
 
