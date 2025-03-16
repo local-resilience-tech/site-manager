@@ -2,40 +2,11 @@ use std::time::SystemTime;
 
 use p2panda_core::{
     cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError},
-    Body, Extension, Header, Operation, PrivateKey, PruneFlag,
+    Body, Header, Operation, PrivateKey, PruneFlag,
 };
 use p2panda_store::{LocalLogStore, MemoryStore};
-use serde::{Deserialize, Serialize};
 
-use super::topics::LogId;
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CustomExtensions {
-    log_id: LogId,
-
-    #[serde(rename = "prune", skip_serializing_if = "PruneFlag::is_not_set", default = "PruneFlag::default")]
-    prune_flag: PruneFlag,
-}
-
-impl Extension<LogId> for CustomExtensions {
-    fn extract(header: &Header<Self>) -> Option<LogId> {
-        let Some(extensions) = header.extensions.as_ref() else {
-            return None;
-        };
-
-        Some(extensions.log_id.clone())
-    }
-}
-
-impl Extension<PruneFlag> for CustomExtensions {
-    fn extract(header: &Header<Self>) -> Option<PruneFlag> {
-        let Some(extensions) = header.extensions.as_ref() else {
-            return None;
-        };
-
-        Some(extensions.prune_flag.clone())
-    }
-}
+use crate::panda_node::extensions::{CustomExtensions, LogId};
 
 pub async fn create_header(
     store: &mut MemoryStore<LogId, CustomExtensions>,

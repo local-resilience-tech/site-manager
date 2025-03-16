@@ -9,9 +9,7 @@ use rocket::tokio;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-/// Every site_manaer peer writes to one single log per topic which is identified by the node's public
-/// key and the topic id.
-pub type LogId = [u8; 32];
+use crate::panda_node::extensions::LogId;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct ChatTopic(String, [u8; 32]);

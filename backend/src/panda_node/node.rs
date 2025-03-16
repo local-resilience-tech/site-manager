@@ -10,7 +10,7 @@ use p2panda_sync::{
 };
 use rocket::tokio::sync::{mpsc, oneshot};
 
-use crate::panda_comms::{operations::CustomExtensions, topics::LogId};
+use super::extensions::{CustomExtensions, LogId};
 
 pub struct Node<Topic> {
     network: Network<Topic>,

@@ -9,6 +9,7 @@ use rocket::serde::Deserialize;
 
 mod infra;
 mod panda_comms;
+mod panda_node;
 mod repos;
 mod routes;
 

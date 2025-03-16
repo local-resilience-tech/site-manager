@@ -14,12 +14,14 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
+use crate::panda_node::extensions::{CustomExtensions, LogId};
+use crate::panda_node::node::Node;
+
 use super::messages::Message;
-use super::node::Node;
-use super::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging, CustomExtensions};
+use super::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging};
 use super::site_messages::{SiteMessages, SiteRegistration};
 // use super::sites::Sites;
-use super::topics::{AuthorLogMap, ChatTopic, LogId};
+use super::topics::{AuthorLogMap, ChatTopic};
 
 pub struct DirectAddress {
     pub node_id: PublicKey,
