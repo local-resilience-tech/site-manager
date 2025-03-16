@@ -16,16 +16,15 @@ use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use crate::panda_node::extensions::{CustomExtensions, LogId};
 use crate::panda_node::node::Node;
 use crate::panda_node::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging};
+use crate::panda_node::topic::{AuthorLogMap, SiteManagerTopic};
 
 use super::messages::Message;
 use super::site_messages::{SiteMessages, SiteRegistration};
 
-use super::topics::{AuthorLogMap, ChatTopic};
-
 #[derive(Default)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
-    node: Arc<Mutex<Option<Node<ChatTopic>>>>,
+    node: Arc<Mutex<Option<Node<SiteManagerTopic>>>>,
 }
 
 #[derive(Default, Clone)]
@@ -36,13 +35,6 @@ pub struct NodeParams {
 }
 
 impl P2PandaContainer {
-    pub async fn set_params(&self, private_key: PrivateKey, network_name: String, bootstrap_node_id: Option<PublicKey>) {
-        let mut params_lock = self.params.lock().await;
-        params_lock.private_key = Some(private_key);
-        params_lock.network_name = Some(network_name);
-        params_lock.bootstrap_node_id = bootstrap_node_id;
-    }
-
     pub async fn get_params(&self) -> NodeParams {
         let params_lock = self.params.lock().await;
         params_lock.clone()
@@ -51,6 +43,11 @@ impl P2PandaContainer {
     pub async fn set_network_name(&self, network_name: String) {
         let mut params_lock = self.params.lock().await;
         params_lock.network_name = Some(network_name);
+    }
+
+    pub async fn set_private_key(&self, private_key: PrivateKey) {
+        let mut params_lock = self.params.lock().await;
+        params_lock.private_key = Some(private_key);
     }
 
     pub async fn set_bootstrap_node_id(&self, bootstrap_node_id: Option<PublicKey>) {
@@ -119,7 +116,7 @@ impl P2PandaContainer {
         )
         .await?;
 
-        let topic = ChatTopic::new("site_management");
+        let topic = SiteManagerTopic::new("site_management");
         self.setup_subscriptions(topic, &node, operation_store, author_log_map, site_name, private_key)
             .await?;
 
@@ -131,8 +128,8 @@ impl P2PandaContainer {
 
     async fn setup_subscriptions(
         &self,
-        topic: ChatTopic,
-        node: &Node<ChatTopic>,
+        topic: SiteManagerTopic,
+        node: &Node<SiteManagerTopic>,
         operation_store: MemoryStore<[u8; 32], CustomExtensions>,
         author_log_map: AuthorLogMap,
         site_name: String,
@@ -245,7 +242,7 @@ impl P2PandaContainer {
         node.known_peers().await
     }
 
-    async fn set_node(&self, maybe_node: Option<Node<ChatTopic>>) {
+    async fn set_node(&self, maybe_node: Option<Node<SiteManagerTopic>>) {
         let mut node_lock = self.node.lock().await;
         *node_lock = maybe_node;
     }
@@ -255,7 +252,7 @@ async fn announce_site_regularly(
     site_name: String,
     operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
     author_log_map: &AuthorLogMap,
-    topic: ChatTopic,
+    topic: SiteManagerTopic,
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,
 ) {
@@ -300,7 +297,7 @@ async fn publish_operation(
     body: Option<Body>,
     operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
     author_log_map: &mut AuthorLogMap,
-    topic: ChatTopic,
+    topic: SiteManagerTopic,
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,
 ) -> Result<()> {

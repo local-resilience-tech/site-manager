@@ -37,8 +37,6 @@ where
 
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
 
-        //let topic = ChatTopic::new("site_management");
-
         let mut builder: NetworkBuilder<Topic> = NetworkBuilder::new(network_id)
             .private_key(private_key.clone())
             .relay(relay_url.clone(), false, 0)

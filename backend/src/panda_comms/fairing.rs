@@ -1,4 +1,5 @@
 use p2panda_core::PublicKey;
+use p2panda_net::network;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::{Orbit, Rocket};
 use rocket_db_pools::Database;
@@ -30,33 +31,35 @@ impl Fairing for P2PandaCommsFairing {
                     Ok(network_name) => {
                         if let Some(network_name) = network_name {
                             println!("Got network name: {:?}", network_name);
-
-                            match repo.get_or_create_private_key(db).await {
-                                Ok(private_key) => {
-                                    println!("Got private key");
-
-                                    let bootstrap_details = repo.get_bootstrap_details(db).await.unwrap();
-                                    let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
-                                        Some(details) => build_public_key_from_hex(details.node_id.clone()),
-                                        None => None,
-                                    };
-                                    container
-                                        .set_params(private_key, network_name, bootstrap_node_id)
-                                        .await;
-
-                                    if let Err(e) = container.start().await {
-                                        println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
-                                    }
-                                }
-                                Err(_) => {
-                                    println!("Failed to get private key");
-                                }
-                            }
+                            container.set_network_name(network_name).await;
                         }
                     }
                     Err(_) => {
                         println!("Failed to get network name");
                     }
+                }
+
+                match repo.get_or_create_private_key(db).await {
+                    Ok(private_key) => {
+                        println!("Got private key");
+                        container.set_private_key(private_key).await;
+                    }
+                    Err(_) => {
+                        println!("Failed to get private key");
+                    }
+                }
+
+                let bootstrap_details = repo.get_bootstrap_details(db).await.unwrap();
+                let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
+                    Some(details) => build_public_key_from_hex(details.node_id.clone()),
+                    None => None,
+                };
+                container
+                    .set_bootstrap_node_id(bootstrap_node_id)
+                    .await;
+
+                if let Err(e) = container.start().await {
+                    println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
                 }
             } else {
                 println!("P2PandaContainer state not found.");
