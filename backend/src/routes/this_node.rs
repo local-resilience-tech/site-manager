@@ -38,10 +38,10 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
 
 #[post("/restart", format = "json")]
 async fn restart(panda_container: &State<P2PandaContainer>) -> Result<Json<String>, ThisNodeError> {
-    panda_container
-        .restart()
-        .await
-        .map_err(|e| ThisNodeError::InternalServerError(e.to_string()))?;
+    panda_container.restart().await.map_err(|e| {
+        println!("got error: {}", e);
+        ThisNodeError::InternalServerError(e.to_string())
+    })?;
 
     Ok(Json("Restarted".to_string()))
 }

@@ -1,5 +1,4 @@
 use p2panda_core::PublicKey;
-use p2panda_net::network;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::{Orbit, Rocket};
 use rocket_db_pools::Database;
