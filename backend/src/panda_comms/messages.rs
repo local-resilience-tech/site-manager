@@ -12,12 +12,4 @@ impl<Payload: Serialize> Message<Payload> {
         let message = Message { payload };
         encode_cbor(&message)
     }
-
-    // pub fn decode<'a>(bytes: &'a [u8]) -> Result<Message<Payload>>
-    // where
-    //     for<'de> Payload: Deserialize<'de>,
-    // {
-    //     let message: Message<Payload> = decode_cbor(bytes)?;
-    //     Ok(message)
-    // }
 }

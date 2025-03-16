@@ -6,7 +6,7 @@ use p2panda_core::{
 };
 use p2panda_store::{LocalLogStore, MemoryStore};
 
-use crate::panda_node::extensions::{CustomExtensions, LogId};
+use super::extensions::{CustomExtensions, LogId};
 
 pub async fn create_header(
     store: &mut MemoryStore<LogId, CustomExtensions>,
