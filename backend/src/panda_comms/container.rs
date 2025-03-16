@@ -17,6 +17,7 @@ use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 use super::messages::Message;
+use super::node::Node;
 use super::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging, CustomExtensions};
 use super::site_messages::{SiteMessages, SiteRegistration};
 // use super::sites::Sites;
@@ -31,7 +32,7 @@ pub struct DirectAddress {
 pub struct P2PandaContainer {
     network_name: Arc<Mutex<Option<String>>>,
     private_key: Arc<Mutex<Option<PrivateKey>>>,
-    pub network: Arc<Mutex<Option<Network<ChatTopic>>>>,
+    node: Arc<Mutex<Option<Node<ChatTopic>>>>,
 }
 
 // This Iroh relay node is hosted by Liebe Chaos for P2Panda development. It is not intended for
@@ -136,8 +137,13 @@ impl P2PandaContainer {
             .await?;
 
         // put the network in the container
-        let mut network_lock = self.network.lock().await;
-        *network_lock = Some(network);
+        // let mut network_lock = self.network.lock().await;
+        // *network_lock = Some(network);
+
+        // put the node in the container
+        let node = Node::new(network.clone());
+        let mut node_lock = self.node.lock().await;
+        *node_lock = Some(node);
 
         Ok(())
     }
@@ -239,24 +245,23 @@ impl P2PandaContainer {
     }
 
     pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
-        let network = self.network.lock().await;
-        let network = network.as_ref().ok_or("Network not started")?;
-        let node_id = network.node_id();
+        let node = self.node.lock().await;
+        let node = node.as_ref().ok_or("Network not started")?;
+
+        let node_id = node.node_id();
         Ok(node_id.to_string())
     }
 
     pub async fn get_node_addr(&self) -> NodeAddr {
-        let network = self.network.lock().await;
-        let network = network.as_ref().unwrap();
-        let endpoint = network.endpoint();
-        let node_addr = endpoint.node_addr().await.unwrap();
-        node_addr
+        let node = self.node.lock().await;
+        let node = node.as_ref().unwrap();
+        node.get_node_addr().await
     }
 
     pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
-        let network = self.network.lock().await;
-        let network = network.as_ref().unwrap();
-        return network.known_peers().await;
+        let node = self.node.lock().await;
+        let node = node.as_ref().unwrap();
+        node.known_peers().await
     }
 }
 
