@@ -9,7 +9,6 @@ use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_stream::{DecodeExt, IngestExt};
 use rocket::tokio::sync::mpsc;
 use rocket::tokio::{self, task};
-use std::net::{SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
@@ -22,11 +21,6 @@ use super::operations::{create_header, decode_gossip_message, encode_gossip_mess
 use super::site_messages::{SiteMessages, SiteRegistration};
 // use super::sites::Sites;
 use super::topics::{AuthorLogMap, ChatTopic};
-
-pub struct DirectAddress {
-    pub node_id: PublicKey,
-    pub _addresses: Vec<SocketAddr>,
-}
 
 #[derive(Default)]
 pub struct P2PandaContainer {
@@ -56,16 +50,6 @@ impl P2PandaContainer {
         private_key_lock.clone().or(None)
     }
 
-    pub fn build_direct_address(&self, node_id_hex: String, ip4_address: String) -> Result<DirectAddress, anyhow::Error> {
-        let node_id = build_public_key_from_hex(node_id_hex).ok_or(anyhow::Error::msg("Invalid node id"))?;
-        let addr = SocketAddr::V4(SocketAddrV4::new(ip4_address.parse()?, 2022));
-        let addresses: Vec<SocketAddr> = vec![addr];
-        Ok(DirectAddress {
-            node_id,
-            _addresses: addresses,
-        })
-    }
-
     pub async fn restart(&self) -> Result<()> {
         self.shutdown().await?;
 
@@ -84,7 +68,7 @@ impl P2PandaContainer {
         Ok(())
     }
 
-    pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
+    pub async fn start(&self, boostrap_node_id: Option<PublicKey>) -> Result<()> {
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
 
@@ -104,12 +88,11 @@ impl P2PandaContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(site_name, private_key, network_name, direct_address)
+        self.start_for(site_name, private_key, network_name, boostrap_node_id)
             .await
     }
 
-    async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, direct_address: Option<DirectAddress>) -> Result<()> {
-        let boostrap_node_id = direct_address.map(|da| da.node_id);
+    async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
         let author_log_map = AuthorLogMap::new();
         let operation_store = MemoryStore::<LogId, CustomExtensions>::new();
         let node = Node::new(
@@ -336,7 +319,7 @@ async fn publish_operation(
 }
 
 // TODO: This should be in p2panda-core, submit a PR
-fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
+pub fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
     let key_bytes = hex::decode(key_hex).ok()?;
     let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes.try_into().ok()?;
     let result = PublicKey::from_bytes(&key_byte_array);

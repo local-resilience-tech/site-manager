@@ -1,9 +1,10 @@
+use p2panda_core::PublicKey;
 use rocket::serde::json::Json;
 use rocket::{Route, State};
 use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
-use crate::panda_comms::container::P2PandaContainer;
+use crate::panda_comms::container::{build_public_key_from_hex, P2PandaContainer};
 use crate::repos::entities::Region;
 use crate::repos::this_node::{SimplifiedNodeAddress, ThisNodeError, ThisNodeRepo};
 
@@ -51,17 +52,13 @@ async fn bootstrap(
         .set_network_name(data.network_name.clone())
         .await;
 
-    let direct_address = match peer_address.clone() {
-        Some(bootstrap) => Some(
-            panda_container
-                .build_direct_address(bootstrap.node_id, bootstrap.ip4)
-                .unwrap(),
-        ),
+    let bootstrap_node_id: Option<PublicKey> = match peer_address.clone() {
+        Some(bootstrap) => build_public_key_from_hex(bootstrap.node_id.clone()),
         None => None,
     };
 
     // start the container
-    if let Err(e) = panda_container.start(direct_address).await {
+    if let Err(e) = panda_container.start(bootstrap_node_id).await {
         println!("Failed to start P2PandaContainer: {:?}", e);
     }
 

@@ -1,3 +1,4 @@
+use p2panda_core::PublicKey;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::{Orbit, Rocket};
 use rocket_db_pools::Database;
@@ -5,6 +6,8 @@ use rocket_db_pools::Database;
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
 use crate::repos::this_node::ThisNodeRepo;
+
+use super::container::build_public_key_from_hex;
 
 #[derive(Default)]
 pub struct P2PandaCommsFairing {}
@@ -46,16 +49,12 @@ impl Fairing for P2PandaCommsFairing {
                 }
 
                 let bootstrap_details = repo.get_bootstrap_details(db).await.unwrap();
-                let direct_address = match bootstrap_details {
-                    Some(bootstrap) => Some(
-                        container
-                            .build_direct_address(bootstrap.node_id, bootstrap.ip4)
-                            .unwrap(),
-                    ),
+                let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
+                    Some(details) => build_public_key_from_hex(details.node_id.clone()),
                     None => None,
                 };
 
-                if let Err(e) = container.start(direct_address).await {
+                if let Err(e) = container.start(bootstrap_node_id).await {
                     println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
                 }
             } else {
