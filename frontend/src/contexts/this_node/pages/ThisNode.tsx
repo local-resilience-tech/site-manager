@@ -2,6 +2,7 @@ import { VStack, Text, Table, Box } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import ThisNodeApi from "../api"
 import { NodeDetails } from "../types"
+import { Button } from "../../../components"
 
 const api = new ThisNodeApi()
 
@@ -28,9 +29,18 @@ export default function ThisNode() {
     return <></>
   }
 
+  const restartNode = () => async () => {
+    console.log("restarting node")
+    await api.restart()
+    fetchNode()
+  }
+
   return (
     <VStack alignItems={"stretch"}>
       <Text textStyle="xl">This P2Panda Node</Text>
+      <Box mb={4}>
+        <Button onClick={restartNode()}>Restart Node</Button>
+      </Box>
       <Table.Root variant="line">
         <Table.Header>
           <Table.Row>

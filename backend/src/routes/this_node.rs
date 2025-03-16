@@ -36,6 +36,16 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
     Ok(Json(node_details))
 }
 
+#[post("/restart", format = "json")]
+async fn restart(panda_container: &State<P2PandaContainer>) -> Result<Json<String>, ThisNodeError> {
+    panda_container
+        .restart()
+        .await
+        .map_err(|e| ThisNodeError::InternalServerError(e.to_string()))?;
+
+    Ok(Json("Restarted".to_string()))
+}
+
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct BootstrapNodePeer {
@@ -51,5 +61,5 @@ pub struct BootstrapNodeData {
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![show]
+    routes![show, restart]
 }

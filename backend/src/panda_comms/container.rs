@@ -66,6 +66,24 @@ impl P2PandaContainer {
         })
     }
 
+    pub async fn restart(&self) -> Result<()> {
+        self.shutdown().await?;
+
+        Ok(())
+    }
+
+    pub async fn shutdown(&self) -> Result<()> {
+        let node = self.node.lock().await;
+        let node = node
+            .as_ref()
+            .ok_or(anyhow::Error::msg("Network not started"))?;
+
+        node.shutdown().await?;
+        self.set_node(None).await;
+
+        Ok(())
+    }
+
     pub async fn start(&self, direct_address: Option<DirectAddress>) -> Result<()> {
         let site_name = get_site_name();
         println!("Starting client for site: {}", site_name);
@@ -108,8 +126,7 @@ impl P2PandaContainer {
             .await?;
 
         // put the node in the container
-        let mut node_lock = self.node.lock().await;
-        *node_lock = Some(node);
+        self.set_node(Some(node)).await;
 
         Ok(())
     }
@@ -228,6 +245,11 @@ impl P2PandaContainer {
         let node = self.node.lock().await;
         let node = node.as_ref().unwrap();
         node.known_peers().await
+    }
+
+    async fn set_node(&self, maybe_node: Option<Node<ChatTopic>>) {
+        let mut node_lock = self.node.lock().await;
+        *node_lock = maybe_node;
     }
 }
 

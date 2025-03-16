@@ -80,4 +80,8 @@ where
     pub async fn subscribe(&self, topic: Topic) -> Result<(mpsc::Sender<ToNetwork>, mpsc::Receiver<FromNetwork>, oneshot::Receiver<()>)> {
         self.network.subscribe(topic).await
     }
+
+    pub async fn shutdown(&self) -> Result<()> {
+        self.network.clone().shutdown().await
+    }
 }
