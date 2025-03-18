@@ -5,16 +5,16 @@ use p2panda_core::{
     Body, Header, Operation, PrivateKey, PruneFlag,
 };
 use p2panda_store::{LocalLogStore, MemoryStore};
+use serde_json::json;
 
-use super::extensions::{CustomExtensions, LogId};
+use crate::toolkitty_node::extensions::{Extensions, LogId, LogPath};
 
 pub async fn create_header(
-    store: &mut MemoryStore<LogId, CustomExtensions>,
+    store: &mut MemoryStore<LogId, Extensions>,
     log_id: LogId,
     private_key: &PrivateKey,
     maybe_body: Option<Body>,
-    prune_flag: bool,
-) -> Header<CustomExtensions> {
+) -> Header<Extensions> {
     let public_key = private_key.public_key();
 
     let Ok(latest_operation) = store.latest_operation(&public_key, &log_id).await;
@@ -29,9 +29,11 @@ pub async fn create_header(
         .expect("time from operation system")
         .as_secs();
 
-    let extensions = CustomExtensions {
-        log_id,
-        prune_flag: PruneFlag::new(prune_flag),
+    let log_path: LogPath = json!("site_management").into();
+
+    let extensions = Extensions {
+        log_path: Some(log_path),
+        ..Default::default()
     };
 
     let mut header = Header {
@@ -51,7 +53,7 @@ pub async fn create_header(
     header
 }
 
-pub fn encode_gossip_message(header: &Header<CustomExtensions>, body: Option<&Body>) -> Result<Vec<u8>, EncodeError> {
+pub fn encode_gossip_message(header: &Header<Extensions>, body: Option<&Body>) -> Result<Vec<u8>, EncodeError> {
     encode_cbor(&(header.to_bytes(), body.map(|body| body.to_bytes())))
 }
 
@@ -64,7 +66,7 @@ pub struct OperationDetails {
     pub seq_num: u64,
 }
 
-pub fn prepare_for_logging(operation: Operation<CustomExtensions>) -> OperationDetails {
+pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails {
     let Operation { hash, header, body: _ } = operation;
     let header = header.clone();
 

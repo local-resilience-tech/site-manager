@@ -10,7 +10,7 @@ use p2panda_sync::{
 };
 use rocket::tokio::sync::{mpsc, oneshot};
 
-use super::extensions::{CustomExtensions, LogId};
+use crate::toolkitty_node::extensions::{Extensions, LogId};
 
 pub struct Node<Topic> {
     network: Network<Topic>,
@@ -29,7 +29,7 @@ where
         private_key: PrivateKey,
         bootstrap_node_id: Option<PublicKey>,
         topic_map: TM,
-        operation_store: MemoryStore<[u8; 32], CustomExtensions>,
+        operation_store: MemoryStore<LogId, Extensions>,
     ) -> Result<Self> {
         println!("P2Panda: Starting network: {}", network_name);
 

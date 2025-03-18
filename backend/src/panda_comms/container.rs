@@ -13,10 +13,10 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
-use crate::panda_node::extensions::{CustomExtensions, LogId};
 use crate::panda_node::node::Node;
 use crate::panda_node::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging};
-use crate::panda_node::topic::{AuthorLogMap, SiteManagerTopic};
+use crate::toolkitty_node::extensions::{Extensions, LogId};
+use crate::toolkitty_node::topic::{Topic, TopicMap};
 
 use super::messages::Message;
 use super::site_messages::{SiteMessages, SiteRegistration};
@@ -24,7 +24,7 @@ use super::site_messages::{SiteMessages, SiteRegistration};
 #[derive(Default)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
-    node: Arc<Mutex<Option<Node<SiteManagerTopic>>>>,
+    node: Arc<Mutex<Option<Node<Topic>>>>,
 }
 
 #[derive(Default, Clone)]
@@ -105,19 +105,20 @@ impl P2PandaContainer {
     }
 
     async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
-        let author_log_map = AuthorLogMap::new();
-        let operation_store = MemoryStore::<LogId, CustomExtensions>::new();
+        let topic_map = TopicMap::new();
+        let operation_store = MemoryStore::<LogId, Extensions>::new();
         let node = Node::new(
             network_name,
             private_key.clone(),
             boostrap_node_id,
-            author_log_map.clone(),
+            topic_map.clone(),
             operation_store.clone(),
         )
         .await?;
 
-        let topic = SiteManagerTopic::new("site_management");
-        self.setup_subscriptions(topic, &node, operation_store, author_log_map, site_name, private_key)
+        let topic = Topic::Persisted("site_management".to_string());
+
+        self.setup_subscriptions(topic, &node, operation_store, topic_map, site_name, private_key)
             .await?;
 
         // put the node in the container
@@ -128,10 +129,10 @@ impl P2PandaContainer {
 
     async fn setup_subscriptions(
         &self,
-        topic: SiteManagerTopic,
-        node: &Node<SiteManagerTopic>,
-        operation_store: MemoryStore<[u8; 32], CustomExtensions>,
-        author_log_map: AuthorLogMap,
+        topic: Topic,
+        node: &Node<Topic>,
+        operation_store: MemoryStore<LogId, Extensions>,
+        topic_map: TopicMap,
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
@@ -139,15 +140,15 @@ impl P2PandaContainer {
 
         {
             let mut operation_store = operation_store.clone();
-            let mut author_log_map = author_log_map.clone();
+            let mut topic_map = topic_map.clone();
             let topic = topic.clone();
 
             task::spawn(async move {
-                announce_site_regularly(site_name, &mut operation_store, &mut author_log_map, topic, &private_key, &network_tx).await;
+                announce_site_regularly(site_name, &mut operation_store, &mut topic_map, topic, &private_key, &network_tx).await;
                 if gossip_ready.await.is_ok() {
                     println!("- JOINED GOSSIP NETWORK -");
 
-                    // announce_site_regularly(site_name, &mut operation_store, &mut author_log_map, topic, &private_key, &network_tx);
+                    // announce_site_regularly(site_name, &mut operation_store, &mut topic_map, topic, &private_key, &network_tx);
                 }
             });
         }
@@ -205,14 +206,14 @@ impl P2PandaContainer {
             });
 
         {
-            let mut author_log_map = author_log_map.clone();
+            let mut topic_map = topic_map.clone();
             let topic = topic.clone();
 
             task::spawn(async move {
                 while let Some(operation) = stream.next().await {
-                    author_log_map
-                        .add_author(topic.clone(), operation.header.public_key)
-                        .await;
+                    // topic_map
+                    //     .add_author(topic.clone(), operation.header.public_key)
+                    //     .await;
 
                     println!("+ Received operation: {:?}", prepare_for_logging(operation));
                 }
@@ -242,7 +243,7 @@ impl P2PandaContainer {
         node.known_peers().await
     }
 
-    async fn set_node(&self, maybe_node: Option<Node<SiteManagerTopic>>) {
+    async fn set_node(&self, maybe_node: Option<Node<Topic>>) {
         let mut node_lock = self.node.lock().await;
         *node_lock = maybe_node;
     }
@@ -250,14 +251,14 @@ impl P2PandaContainer {
 
 async fn announce_site_regularly(
     site_name: String,
-    operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
-    author_log_map: &AuthorLogMap,
-    topic: SiteManagerTopic,
+    operation_store: &mut MemoryStore<LogId, Extensions>,
+    topic_map: &TopicMap,
+    topic: Topic,
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,
 ) {
     let mut operation_store = operation_store.clone();
-    let mut author_log_map = author_log_map.clone();
+    let mut topic_map = topic_map.clone();
     let private_key = private_key.clone();
     let network_tx = network_tx.clone();
 
@@ -268,16 +269,9 @@ async fn announce_site_regularly(
             interval.tick().await;
 
             let body = build_announce_site_body(&site_name);
-            publish_operation(
-                Some(body),
-                &mut operation_store,
-                &mut author_log_map,
-                topic.clone(),
-                &private_key,
-                &network_tx,
-            )
-            .await
-            .ok();
+            // publish_operation(Some(body), &mut operation_store, &mut topic_map, topic.clone(), &private_key, &network_tx)
+            //     .await
+            //     .ok();
         }
     });
 }
@@ -293,42 +287,42 @@ fn build_announce_site_body(name: &str) -> Body {
     Body::new(&bytes)
 }
 
-async fn publish_operation(
-    body: Option<Body>,
-    operation_store: &mut MemoryStore<[u8; 32], CustomExtensions>,
-    author_log_map: &mut AuthorLogMap,
-    topic: SiteManagerTopic,
-    private_key: &PrivateKey,
-    network_tx: &mpsc::Sender<ToNetwork>,
-) -> Result<()> {
-    let header = create_header(&mut operation_store.clone(), topic.id(), &private_key, body.clone(), false).await;
+// async fn publish_operation(
+//     body: Option<Body>,
+//     operation_store: &mut MemoryStore<LogId, Extensions>,
+//     topic_map: &mut TopicMap,
+//     topic: Topic,
+//     private_key: &PrivateKey,
+//     network_tx: &mpsc::Sender<ToNetwork>,
+// ) -> Result<()> {
+//     let header = create_header(&mut operation_store.clone(), topic.id(), &private_key, body.clone()).await;
 
-    let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
-    let header_bytes = header.to_bytes();
+//     let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
+//     let header_bytes = header.to_bytes();
 
-    let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &topic.id(), false).await?;
+//     let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &topic.id(), false).await?;
 
-    match ingest_result {
-        IngestResult::Complete(operation) => {
-            author_log_map
-                .add_author(topic, operation.header.public_key)
-                .await;
+//     match ingest_result {
+//         IngestResult::Complete(operation) => {
+//             // topic_map
+//             //     .add_author(topic, operation.header.public_key)
+//             //     .await;
 
-            if network_tx
-                .send(ToNetwork::Message { bytes: gossip_message_bytes })
-                .await
-                .is_err()
-            {
-                println!("Failed to send gossip message");
-            } else {
-                println!("  Publish Operation - Sent gossip message: {:?}", prepare_for_logging(operation));
-            }
-        }
-        _ => unreachable!(),
-    }
+//             if network_tx
+//                 .send(ToNetwork::Message { bytes: gossip_message_bytes })
+//                 .await
+//                 .is_err()
+//             {
+//                 println!("Failed to send gossip message");
+//             } else {
+//                 println!("  Publish Operation - Sent gossip message: {:?}", prepare_for_logging(operation));
+//             }
+//         }
+//         _ => unreachable!(),
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 // TODO: This should be in p2panda-core, submit a PR
 pub fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {

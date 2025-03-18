@@ -1,2 +1,2 @@
-mod extensions;
+pub mod extensions;
 pub mod topic;
