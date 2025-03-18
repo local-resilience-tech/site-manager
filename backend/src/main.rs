@@ -12,6 +12,7 @@ mod panda_comms;
 mod panda_node;
 mod repos;
 mod routes;
+mod toolkitty_node;
 
 #[macro_use]
 extern crate rocket;
