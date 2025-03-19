@@ -1,7 +1,4 @@
-use p2panda_core::{
-    cbor::{decode_cbor, DecodeError},
-    Operation,
-};
+use p2panda_core::Operation;
 
 use crate::toolkitty_node::extensions::Extensions;
 
@@ -24,8 +21,4 @@ pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails
         timestamp: header.timestamp,
         seq_num: header.seq_num,
     };
-}
-
-pub fn decode_gossip_message(bytes: &[u8]) -> Result<(Vec<u8>, Option<Vec<u8>>), DecodeError> {
-    decode_cbor(bytes)
 }

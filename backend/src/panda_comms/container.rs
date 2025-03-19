@@ -3,9 +3,8 @@ use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Body, PrivateKey, PublicKey};
-use p2panda_net::{FromNetwork, NodeAddress, ToNetwork, TopicId};
+use p2panda_net::{FromNetwork, NodeAddress, ToNetwork};
 use p2panda_store::MemoryStore;
-use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_stream::{DecodeExt, IngestExt};
 use rocket::tokio::sync::mpsc;
 use rocket::tokio::{self, task};
@@ -15,9 +14,9 @@ use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 use crate::panda_node::node::Node;
-use crate::panda_node::operations::{decode_gossip_message, prepare_for_logging};
+use crate::panda_node::operations::prepare_for_logging;
 use crate::toolkitty_node::extensions::{Extensions, LogId, LogPath};
-use crate::toolkitty_node::operation::create_operation;
+use crate::toolkitty_node::operation::{create_operation, decode_gossip_message};
 use crate::toolkitty_node::topic::{Topic, TopicMap};
 
 use super::messages::Message;
