@@ -9,13 +9,15 @@ use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_stream::{DecodeExt, IngestExt};
 use rocket::tokio::sync::mpsc;
 use rocket::tokio::{self, task};
+use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 use crate::panda_node::node::Node;
-use crate::panda_node::operations::{create_header, decode_gossip_message, encode_gossip_message, prepare_for_logging};
-use crate::toolkitty_node::extensions::{Extensions, LogId};
+use crate::panda_node::operations::{decode_gossip_message, prepare_for_logging};
+use crate::toolkitty_node::extensions::{Extensions, LogId, LogPath};
+use crate::toolkitty_node::operation::create_operation;
 use crate::toolkitty_node::topic::{Topic, TopicMap};
 
 use super::messages::Message;
@@ -269,9 +271,9 @@ async fn announce_site_regularly(
             interval.tick().await;
 
             let body = build_announce_site_body(&site_name);
-            // publish_operation(Some(body), &mut operation_store, &mut topic_map, topic.clone(), &private_key, &network_tx)
-            //     .await
-            //     .ok();
+            publish_operation(Some(body), &mut operation_store, &mut topic_map, topic.clone(), &private_key, &network_tx)
+                .await
+                .ok();
         }
     });
 }
@@ -285,6 +287,57 @@ fn build_announce_site_body(name: &str) -> Body {
     let bytes = Message::encode(message).unwrap();
 
     Body::new(&bytes)
+}
+
+async fn publish_operation(
+    body: Option<Body>,
+    operation_store: &mut MemoryStore<LogId, Extensions>,
+    topic_map: &mut TopicMap,
+    topic: Topic,
+    private_key: &PrivateKey,
+    network_tx: &mpsc::Sender<ToNetwork>,
+) -> Result<()> {
+    // let header = create_header(&mut operation_store.clone(), topic.id(), &private_key, body.clone()).await;
+
+    // let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
+    // let header_bytes = header.to_bytes();
+
+    let log_path: LogPath = json!("site_management").into();
+
+    let extensions = Extensions {
+        log_path: Some(log_path),
+        ..Default::default()
+    };
+    let body_bytes: Option<Vec<u8>> = body.map(|body| body.to_bytes());
+    let body_bytes_array = body_bytes
+        .as_ref()
+        .map(|body| body.as_slice())
+        .unwrap_or(&[]);
+
+    let (header, body) = create_operation(&mut operation_store.clone(), &private_key, extensions, Some(body_bytes_array)).await;
+
+    // let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &topic.id(), false).await?;
+
+    // match ingest_result {
+    //     IngestResult::Complete(operation) => {
+    //         // topic_map
+    //         //     .add_author(topic, operation.header.public_key)
+    //         //     .await;
+
+    //         if network_tx
+    //             .send(ToNetwork::Message { bytes: gossip_message_bytes })
+    //             .await
+    //             .is_err()
+    //         {
+    //             println!("Failed to send gossip message");
+    //         } else {
+    //             println!("  Publish Operation - Sent gossip message: {:?}", prepare_for_logging(operation));
+    //         }
+    //     }
+    //     _ => unreachable!(),
+    // }
+
+    Ok(())
 }
 
 // async fn publish_operation(
