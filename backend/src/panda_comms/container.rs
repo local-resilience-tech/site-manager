@@ -207,8 +207,8 @@ impl P2PandaContainer {
             });
 
         {
-            let mut topic_map = topic_map.clone();
-            let topic = topic.clone();
+            // let mut topic_map = topic_map.clone();
+            // let topic = topic.clone();
 
             task::spawn(async move {
                 while let Some(operation) = stream.next().await {
@@ -296,11 +296,6 @@ async fn publish_operation(
     private_key: &PrivateKey,
     network_tx: &mpsc::Sender<ToNetwork>,
 ) -> Result<()> {
-    // let header = create_header(&mut operation_store.clone(), topic.id(), &private_key, body.clone()).await;
-
-    // let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
-    // let header_bytes = header.to_bytes();
-
     let log_path: LogPath = json!("site_management").into();
 
     let extensions = Extensions {
@@ -338,43 +333,6 @@ async fn publish_operation(
 
     Ok(())
 }
-
-// async fn publish_operation(
-//     body: Option<Body>,
-//     operation_store: &mut MemoryStore<LogId, Extensions>,
-//     topic_map: &mut TopicMap,
-//     topic: Topic,
-//     private_key: &PrivateKey,
-//     network_tx: &mpsc::Sender<ToNetwork>,
-// ) -> Result<()> {
-//     let header = create_header(&mut operation_store.clone(), topic.id(), &private_key, body.clone()).await;
-
-//     let gossip_message_bytes: Vec<u8> = encode_gossip_message(&header, body.as_ref())?;
-//     let header_bytes = header.to_bytes();
-
-//     let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &topic.id(), false).await?;
-
-//     match ingest_result {
-//         IngestResult::Complete(operation) => {
-//             // topic_map
-//             //     .add_author(topic, operation.header.public_key)
-//             //     .await;
-
-//             if network_tx
-//                 .send(ToNetwork::Message { bytes: gossip_message_bytes })
-//                 .await
-//                 .is_err()
-//             {
-//                 println!("Failed to send gossip message");
-//             } else {
-//                 println!("  Publish Operation - Sent gossip message: {:?}", prepare_for_logging(operation));
-//             }
-//         }
-//         _ => unreachable!(),
-//     }
-
-//     Ok(())
-// }
 
 // TODO: This should be in p2panda-core, submit a PR
 pub fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
