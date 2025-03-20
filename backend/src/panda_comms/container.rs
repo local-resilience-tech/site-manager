@@ -13,8 +13,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
-use crate::panda_node::node::Node;
-use crate::panda_node::operations::prepare_for_logging;
+use crate::app_node::node::Node;
+use crate::app_node::operations::prepare_for_logging;
 use crate::toolkitty_node::extensions::{Extensions, LogId, LogPath};
 use crate::toolkitty_node::operation::{create_operation, decode_gossip_message};
 use crate::toolkitty_node::topic::{Topic, TopicMap};
