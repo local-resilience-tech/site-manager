@@ -8,7 +8,7 @@ use iroh_io::AsyncSliceReader;
 use p2panda_blobs::{Blobs, DownloadBlobEvent, FilesystemStore as BlobsStore, ImportBlobEvent};
 use p2panda_core::{Body, Hash, Header, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{Network, NetworkBuilder, RelayUrl, SyncConfiguration, SystemEvent, TopicId};
+use p2panda_net::{network, Network, NetworkBuilder, NetworkId, RelayUrl, SyncConfiguration, SystemEvent, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_sync::log_sync::{LogSyncProtocol, TopicLogMap};
 use p2panda_sync::TopicQuery;
@@ -29,10 +29,6 @@ use super::{
     stream::{StreamController, StreamControllerError, StreamEvent, ToStreamController},
 };
 
-fn network_id() -> [u8; 32] {
-    Hash::new(b"toolkitty").into()
-}
-
 pub struct Node<T> {
     pub private_key: PrivateKey,
     pub store: MemoryStore<LogId, Extensions>,
@@ -51,6 +47,7 @@ where
     T: TopicId + TopicQuery + 'static,
 {
     pub async fn new<TM: TopicLogMap<T, LogId> + 'static>(
+        network_name: String,
         private_key: PrivateKey,
         bootstrap_node_id: Option<PublicKey>,
         relay_url: Option<RelayUrl>,
@@ -58,6 +55,8 @@ where
         blobs_root_dir: PathBuf,
         topic_map: TM,
     ) -> Result<(Self, mpsc::Receiver<StreamEvent>, broadcast::Receiver<SystemEvent<T>>)> {
+        let network_id: NetworkId = Hash::new(network_name).into();
+
         let rt = tokio::runtime::Handle::current();
 
         let (stream, stream_tx, stream_rx) = StreamController::new(store.clone());
@@ -94,7 +93,7 @@ where
         let sync_protocol = LogSyncProtocol::new(topic_map, store.clone());
         let sync_config = SyncConfiguration::new(sync_protocol);
 
-        let mut network_builder = NetworkBuilder::new(network_id())
+        let mut network_builder = NetworkBuilder::new(network_id)
             .discovery(mdns)
             .sync(sync_config)
             .private_key(private_key.clone());

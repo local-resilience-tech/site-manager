@@ -106,20 +106,12 @@ impl P2PandaContainer {
     }
 
     async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
-        let topic_map = TopicMap::new();
         let operation_store = MemoryStore::<LogId, Extensions>::new();
-        let node = Node::new(
-            network_name,
-            private_key.clone(),
-            boostrap_node_id,
-            topic_map.clone(),
-            operation_store.clone(),
-        )
-        .await?;
+        let node = Node::new(network_name, private_key.clone(), boostrap_node_id, operation_store.clone()).await?;
 
         let topic = Topic::Persisted("site_management".to_string());
 
-        self.setup_subscriptions(topic, &node, operation_store, topic_map, site_name, private_key)
+        self.setup_subscriptions(topic, &node, operation_store, site_name, private_key)
             .await?;
 
         // put the node in the container
@@ -133,19 +125,16 @@ impl P2PandaContainer {
         topic: Topic,
         node: &Node,
         operation_store: MemoryStore<LogId, Extensions>,
-        topic_map: TopicMap,
         site_name: String,
         private_key: PrivateKey,
     ) -> Result<(), anyhow::Error> {
-        let (network_tx, network_rx, gossip_ready) = node.subscribe(topic.clone()).await?;
+        let (_network_tx, network_rx, gossip_ready) = node.subscribe(topic.clone()).await?;
 
         {
             let mut operation_store = operation_store.clone();
-            let mut topic_map = topic_map.clone();
-            let topic = topic.clone();
 
             task::spawn(async move {
-                announce_site_regularly(site_name, &mut operation_store, &mut topic_map, topic, &private_key, &network_tx).await;
+                announce_site_regularly(site_name, &mut operation_store, &private_key).await;
                 if gossip_ready.await.is_ok() {
                     println!("- JOINED GOSSIP NETWORK -");
 
@@ -228,7 +217,7 @@ impl P2PandaContainer {
         let node = self.node.lock().await;
         let node = node.as_ref().ok_or("Network not started")?;
 
-        let node_id = node.node_id();
+        let node_id = node.node_id().await;
         Ok(node_id.to_string())
     }
 
@@ -250,18 +239,9 @@ impl P2PandaContainer {
     }
 }
 
-async fn announce_site_regularly(
-    site_name: String,
-    operation_store: &mut MemoryStore<LogId, Extensions>,
-    topic_map: &TopicMap,
-    topic: Topic,
-    private_key: &PrivateKey,
-    network_tx: &mpsc::Sender<ToNetwork>,
-) {
+async fn announce_site_regularly(site_name: String, operation_store: &mut MemoryStore<LogId, Extensions>, private_key: &PrivateKey) {
     let mut operation_store = operation_store.clone();
-    let mut topic_map = topic_map.clone();
     let private_key = private_key.clone();
-    let network_tx = network_tx.clone();
 
     // spawn a task to announce the site every 30 seconds
     task::spawn(async move {
@@ -270,7 +250,7 @@ async fn announce_site_regularly(
             interval.tick().await;
 
             let body = build_announce_site_body(&site_name);
-            publish_operation(Some(body), &mut operation_store, &mut topic_map, topic.clone(), &private_key, &network_tx)
+            publish_operation(Some(body), &mut operation_store, &private_key)
                 .await
                 .ok();
         }
@@ -288,14 +268,7 @@ fn build_announce_site_body(name: &str) -> Body {
     Body::new(&bytes)
 }
 
-async fn publish_operation(
-    body: Option<Body>,
-    operation_store: &mut MemoryStore<LogId, Extensions>,
-    topic_map: &mut TopicMap,
-    topic: Topic,
-    private_key: &PrivateKey,
-    network_tx: &mpsc::Sender<ToNetwork>,
-) -> Result<()> {
+async fn publish_operation(body: Option<Body>, operation_store: &mut MemoryStore<LogId, Extensions>, private_key: &PrivateKey) -> Result<()> {
     let log_path: LogPath = json!("site_management").into();
 
     let extensions = Extensions {

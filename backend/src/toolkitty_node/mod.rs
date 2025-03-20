@@ -1,10 +1,9 @@
 mod actor;
-mod context;
+pub mod context;
 pub mod extensions;
-mod messages;
+pub mod messages;
 pub mod node;
 pub mod operation;
 mod rpc;
-mod service;
 pub mod stream;
 pub mod topic;

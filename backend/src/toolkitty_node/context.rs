@@ -1,7 +1,7 @@
 use rocket::tokio::sync::{broadcast, mpsc};
 use std::collections::HashMap;
 
-use super::{
+use crate::toolkitty_node::{
     messages::ChannelEvent,
     node::Node,
     topic::{Topic, TopicMap},
