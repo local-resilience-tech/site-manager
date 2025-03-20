@@ -32,7 +32,7 @@ pub enum ToNodeActor<T> {
 }
 
 pub struct NodeActor<T> {
-    network: Network<T>,
+    pub network: Network<T>,
     inbox: mpsc::Receiver<ToNodeActor<T>>,
     topic_rx: SelectAll<ReceiverStream<FromNetwork>>,
     topic_tx: HashMap<[u8; 32], mpsc::Sender<ToNetwork>>,

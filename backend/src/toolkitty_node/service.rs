@@ -1,5 +1,5 @@
-use p2panda_core::PrivateKey;
-use p2panda_net::SystemEvent;
+use p2panda_core::{PrivateKey, PublicKey};
+use p2panda_net::{RelayUrl, SystemEvent};
 use p2panda_store::MemoryStore;
 use rocket::tokio;
 use std::path::PathBuf;
@@ -40,12 +40,20 @@ impl Service {
     ///
     /// The node and several channel senders are added to the shared app context while channel
     /// receivers are stored on the Service struct for use during the runtime loop.
-    pub async fn build(blobs_base_dir: PathBuf) -> anyhow::Result<Self> {
+    pub async fn build(blobs_base_dir: PathBuf, bootstrap_node_id: Option<PublicKey>, relay_url: Option<RelayUrl>) -> anyhow::Result<Self> {
         let private_key = PrivateKey::new();
         let store = MemoryStore::new();
         let topic_map = TopicMap::new();
 
-        let (node, stream_rx, network_events_rx) = Node::new(private_key.clone(), store.clone(), blobs_base_dir, topic_map.clone()).await?;
+        let (node, stream_rx, network_events_rx) = Node::new(
+            private_key.clone(),
+            bootstrap_node_id,
+            relay_url,
+            store.clone(),
+            blobs_base_dir,
+            topic_map.clone(),
+        )
+        .await?;
 
         let (to_app_tx, to_app_rx) = broadcast::channel(32);
         let (channel_tx, channel_rx) = mpsc::channel(32);
@@ -70,7 +78,7 @@ impl Service {
 
         task::spawn(async move {
             let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
-            let mut app = Self::build(temp_blobs_root_dir.into_path())
+            let mut app = Self::build(temp_blobs_root_dir.into_path(), None, None)
                 .await
                 .expect("build stream");
             let rpc = Rpc {
@@ -90,7 +98,7 @@ impl Service {
     #[cfg(test)]
     pub async fn run() -> Arc<RwLock<Context>> {
         let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
-        let mut app = Self::build(temp_blobs_root_dir.into_path())
+        let mut app = Self::build(temp_blobs_root_dir.into_path(), None, None)
             .await
             .expect("build stream");
         let context = app.context.clone();

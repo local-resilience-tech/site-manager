@@ -8,7 +8,7 @@ use iroh_io::AsyncSliceReader;
 use p2panda_blobs::{Blobs, DownloadBlobEvent, FilesystemStore as BlobsStore, ImportBlobEvent};
 use p2panda_core::{Body, Hash, Header, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{NetworkBuilder, SyncConfiguration, SystemEvent, TopicId};
+use p2panda_net::{Network, NetworkBuilder, RelayUrl, SyncConfiguration, SystemEvent, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_sync::log_sync::{LogSyncProtocol, TopicLogMap};
 use p2panda_sync::TopicQuery;
@@ -36,6 +36,7 @@ fn network_id() -> [u8; 32] {
 pub struct Node<T> {
     pub private_key: PrivateKey,
     pub store: MemoryStore<LogId, Extensions>,
+    pub network: Network<T>,
     blobs: Blobs<T, BlobsStore>,
     #[allow(dead_code)]
     stream: StreamController,
@@ -51,6 +52,8 @@ where
 {
     pub async fn new<TM: TopicLogMap<T, LogId> + 'static>(
         private_key: PrivateKey,
+        bootstrap_node_id: Option<PublicKey>,
+        relay_url: Option<RelayUrl>,
         store: MemoryStore<LogId, Extensions>,
         blobs_root_dir: PathBuf,
         topic_map: TM,
@@ -91,10 +94,19 @@ where
         let sync_protocol = LogSyncProtocol::new(topic_map, store.clone());
         let sync_config = SyncConfiguration::new(sync_protocol);
 
-        let network_builder = NetworkBuilder::new(network_id())
+        let mut network_builder = NetworkBuilder::new(network_id())
             .discovery(mdns)
             .sync(sync_config)
             .private_key(private_key.clone());
+
+        if let Some(bootstrap_node_id) = bootstrap_node_id {
+            println!("P2Panda: Direct address provided for peer: {}", bootstrap_node_id);
+            network_builder = network_builder.direct_address(bootstrap_node_id, vec![], relay_url);
+        } else {
+            // I am probably the bootstrap node since I know of no others
+            println!("P2Panda: No direct address provided, starting as bootstrap node");
+            network_builder = network_builder.bootstrap();
+        }
 
         let blobs_store = BlobsStore::load(blobs_root_dir).await?;
         let (network, blobs) = Blobs::from_builder(network_builder, blobs_store).await?;
@@ -102,7 +114,7 @@ where
         let system_events_rx = network.events().await?;
 
         let (network_actor_tx, network_actor_rx) = mpsc::channel(64);
-        let actor = NodeActor::new(network, network_tx, ephemeral_tx, network_actor_rx);
+        let actor = NodeActor::new(network.clone(), network_tx, ephemeral_tx, network_actor_rx);
 
         let actor_handle = rt.spawn(async {
             if let Err(err) = actor.run().await {
@@ -118,6 +130,7 @@ where
             Self {
                 private_key,
                 store,
+                network,
                 blobs,
                 stream,
                 stream_tx,

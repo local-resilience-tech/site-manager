@@ -25,7 +25,7 @@ use super::site_messages::{SiteMessages, SiteRegistration};
 #[derive(Default)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
-    node: Arc<Mutex<Option<Node<Topic>>>>,
+    node: Arc<Mutex<Option<Node>>>,
 }
 
 #[derive(Default, Clone)]
@@ -131,7 +131,7 @@ impl P2PandaContainer {
     async fn setup_subscriptions(
         &self,
         topic: Topic,
-        node: &Node<Topic>,
+        node: &Node,
         operation_store: MemoryStore<LogId, Extensions>,
         topic_map: TopicMap,
         site_name: String,
@@ -244,7 +244,7 @@ impl P2PandaContainer {
         node.known_peers().await
     }
 
-    async fn set_node(&self, maybe_node: Option<Node<Topic>>) {
+    async fn set_node(&self, maybe_node: Option<Node>) {
         let mut node_lock = self.node.lock().await;
         *node_lock = maybe_node;
     }
