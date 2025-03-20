@@ -1,10 +1,9 @@
 use rocket::tokio::sync::{broadcast, mpsc};
 use std::collections::HashMap;
 
-use crate::panda_node::node::Node;
-
 use super::{
     messages::ChannelEvent,
+    node::Node,
     topic::{Topic, TopicMap},
 };
 

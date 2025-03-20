@@ -11,6 +11,7 @@ p2panda-net = "0.3.0"
 p2panda-store = "0.3.0"
 p2panda-stream = "0.3.0"
 p2panda-sync = { version = "0.3.0", features = ["log-sync"] }
+p2panda-blobs = "0.3.0"
 gethostname = "0.5.0"
 serde = "1.0.216"
 serde_json = "1"
@@ -23,6 +24,7 @@ dotenvy = "0.15.7"
 thiserror = "2.0.9"
 uuid = { version = "1.11.0", features = ["v4"] }
 iroh = "^0.33.0"
+iroh-io = "0.6.1"
 hex = "0.4.3"
 rocket_cors = "0.6.0"
 tokio-util = "0.7.10"
@@ -31,6 +33,8 @@ log = "0.4.20"
 tokio-stream = "0.1.17"
 async-trait = "0.1.85"
 tracing = "0.1.41"
+futures-util = "0.3.31"
+tempfile = "3.17.1"
 
 [dependencies.rocket]
 version = "0.5.1"
@@ -40,4 +44,3 @@ features = ["json"]
 sqlx-cli = { version = "0.7.4", default-features = false, features = [
   "sqlite",
 ] }
-futures-util = "0.3.31"
