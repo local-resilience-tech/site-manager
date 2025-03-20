@@ -3,21 +3,20 @@ use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{Body, PrivateKey, PublicKey};
-use p2panda_net::{FromNetwork, NodeAddress, ToNetwork};
+use p2panda_net::{FromNetwork, NodeAddress};
 use p2panda_store::MemoryStore;
 use p2panda_stream::{DecodeExt, IngestExt};
-use rocket::tokio::sync::mpsc;
 use rocket::tokio::{self, task};
 use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
-use crate::app_node::node::Node;
 use crate::app_node::operations::prepare_for_logging;
+use crate::app_node::service::Service;
 use crate::toolkitty_node::extensions::{Extensions, LogId, LogPath};
 use crate::toolkitty_node::operation::{create_operation, decode_gossip_message};
-use crate::toolkitty_node::topic::{Topic, TopicMap};
+use crate::toolkitty_node::topic::Topic;
 
 use super::messages::Message;
 use super::site_messages::{SiteMessages, SiteRegistration};
@@ -25,7 +24,7 @@ use super::site_messages::{SiteMessages, SiteRegistration};
 #[derive(Default)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
-    node: Arc<Mutex<Option<Node>>>,
+    node: Arc<Mutex<Option<Service>>>,
 }
 
 #[derive(Default, Clone)]
@@ -107,7 +106,7 @@ impl P2PandaContainer {
 
     async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
         let operation_store = MemoryStore::<LogId, Extensions>::new();
-        let node = Node::new(network_name, private_key.clone(), boostrap_node_id, operation_store.clone()).await?;
+        let node = Service::new(network_name, private_key.clone(), boostrap_node_id, operation_store.clone()).await?;
 
         let topic = Topic::Persisted("site_management".to_string());
 
@@ -123,7 +122,7 @@ impl P2PandaContainer {
     async fn setup_subscriptions(
         &self,
         topic: Topic,
-        node: &Node,
+        node: &Service,
         operation_store: MemoryStore<LogId, Extensions>,
         site_name: String,
         private_key: PrivateKey,
@@ -233,7 +232,7 @@ impl P2PandaContainer {
         node.known_peers().await
     }
 
-    async fn set_node(&self, maybe_node: Option<Node>) {
+    async fn set_node(&self, maybe_node: Option<Service>) {
         let mut node_lock = self.node.lock().await;
         *node_lock = maybe_node;
     }
@@ -281,7 +280,7 @@ async fn publish_operation(body: Option<Body>, operation_store: &mut MemoryStore
         .map(|body| body.as_slice())
         .unwrap_or(&[]);
 
-    let (header, body) = create_operation(&mut operation_store.clone(), &private_key, extensions, Some(body_bytes_array)).await;
+    let (_header, _body) = create_operation(&mut operation_store.clone(), &private_key, extensions, Some(body_bytes_array)).await;
 
     // let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &topic.id(), false).await?;
 

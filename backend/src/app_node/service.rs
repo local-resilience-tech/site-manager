@@ -11,12 +11,12 @@ use crate::toolkitty_node::{
     context::Context,
     extensions::{Extensions, LogId},
     messages::ChannelEvent,
-    node::Node as ToolkittyNode,
+    node::Node,
     stream::StreamEvent,
     topic::{Topic, TopicMap},
 };
 
-pub struct Node {
+pub struct Service {
     /// Handle onto the tauri application. The shared Context can be accessed and modified here.
     context: Arc<RwLock<Context>>,
 
@@ -37,7 +37,7 @@ pub struct Node {
 // production use, and LoRes tech will eventually provide a relay node for production use.
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 
-impl Node {
+impl Service {
     pub async fn new(
         network_name: String,
         private_key: PrivateKey,
@@ -50,7 +50,7 @@ impl Node {
 
         let topic_map = TopicMap::new();
 
-        let (node, stream_rx, network_events_rx) = ToolkittyNode::new(
+        let (node, stream_rx, network_events_rx) = Node::new(
             network_name,
             private_key.clone(),
             bootstrap_node_id,
