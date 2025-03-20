@@ -85,7 +85,7 @@ impl Rpc {
         return self.subscribe(&topic).await;
     }
 
-    async fn subscribe(&self, topic: &Topic) -> Result<(), RpcError> {
+    pub async fn subscribe(&self, topic: &Topic) -> Result<(), RpcError> {
         let mut context = self.context.write().await;
 
         if context
