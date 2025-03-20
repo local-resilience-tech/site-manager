@@ -431,7 +431,7 @@ mod tests {
 
     use crate::toolkitty_node::extensions::{Extensions, LogId, LogPath, StreamOwner, StreamRootHash};
     use crate::toolkitty_node::operation::{self};
-    use crate::toolkitty_node::StreamEvent;
+    use crate::toolkitty_node::stream::StreamEvent;
 
     use super::{StreamController, ToStreamController};
 
