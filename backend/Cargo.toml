@@ -5,6 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
+iroh-io = "0.6.1"
 experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "a0a25311aeedce3d05dce82eda2a610583072608" }
 p2panda-blobs = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
 p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
@@ -29,7 +30,6 @@ dotenvy = "0.15.7"
 thiserror = "2.0.9"
 uuid = { version = "1.11.0", features = ["v4"] }
 iroh = "^0.33.0"
-iroh-io = "0.6.1"
 hex = "0.4.3"
 rocket_cors = "0.6.0"
 tokio-util = "0.7.10"

@@ -1,6 +1,5 @@
 use p2panda_core::Operation;
-
-use crate::toolkitty_node::extensions::Extensions;
+use p2panda_node::extensions::NodeExtensions;
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -11,7 +10,7 @@ pub struct OperationDetails {
     pub seq_num: u64,
 }
 
-pub fn prepare_for_logging(operation: Operation<Extensions>) -> OperationDetails {
+pub fn prepare_for_logging(operation: Operation<NodeExtensions>) -> OperationDetails {
     let Operation { hash, header, body: _ } = operation;
     let header = header.clone();
 
