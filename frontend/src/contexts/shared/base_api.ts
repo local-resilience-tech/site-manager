@@ -27,6 +27,7 @@ export default class BaseApi {
         headers,
         body: (body && JSON.stringify(body)) || undefined,
       })
+      console.log("got response", response)
       if (response.ok) {
         const json = await response.json()
         return {

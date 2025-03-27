@@ -22,14 +22,18 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
         .await
         .unwrap()
         .to_string();
+    println!("public key: {}", public_key);
 
     let node_addr = panda_container.get_node_addr().await;
+    println!("node addr: {:?}", node_addr);
 
-    let peers = panda_container.known_peers().await;
+    let mut peers = panda_container.known_peers().await;
 
     if peers.is_err() {
         println!("Failed to get known peers {:?}", peers);
-        return Err(ThisNodeError::InternalServerError("Failed to get known peers".to_string()));
+        peers = Ok(vec![]);
+    } else {
+        println!("peers: {:?}", peers);
     }
 
     let node_details = NodeDetails {
