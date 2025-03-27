@@ -27,6 +27,11 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
 
     let peers = panda_container.known_peers().await;
 
+    if peers.is_err() {
+        println!("Failed to get known peers {:?}", peers);
+        return Err(ThisNodeError::InternalServerError("Failed to get known peers".to_string()));
+    }
+
     let node_details = NodeDetails {
         panda_node_id: public_key,
         iroh_node_addr: node_addr,
