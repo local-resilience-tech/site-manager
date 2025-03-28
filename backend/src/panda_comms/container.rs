@@ -110,7 +110,7 @@ impl P2PandaContainer {
 
         let (node, _stream_rx, _network_events_rx) = Node::new(
             network_name,
-            private_key,
+            private_key.clone(),
             boostrap_node_id,
             Some(relay_url),
             store,
@@ -121,9 +121,13 @@ impl P2PandaContainer {
 
         let node_api = NodeApi::new(node, topic_map);
 
-        // let topic = Topic::Persisted("site_management".to_string());
-        // self.setup_subscriptions(topic, &node, operation_store, site_name, private_key)
-        //     .await?;
+        let public_key = private_key.public_key();
+        let topic = "site_management";
+        let log_id = "site_management";
+
+        node_api
+            .add_topic_log(&public_key, &log_id, &topic)
+            .await?;
 
         // put the node in the container
         self.set_node_api(Some(node_api)).await;
