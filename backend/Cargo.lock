@@ -1276,7 +1276,7 @@ dependencies = [
 [[package]]
 name = "experimental-node"
 version = "0.1.0"
-source = "git+https://github.com/p2panda/experimental-node?rev=e5006c8cf573ee4a5882bd0c71a57b6435aa9483#e5006c8cf573ee4a5882bd0c71a57b6435aa9483"
+source = "git+https://github.com/p2panda/experimental-node?rev=929c9861ac50d4ea27631e303375100c5f02ff88#929c9861ac50d4ea27631e303375100c5f02ff88"
 dependencies = [
  "anyhow",
  "async-trait",
