@@ -1,7 +1,7 @@
 {
   "name": "site-manager",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.4.0",
   "devDependencies": {
     "@j-ulrich/release-it-regex-bumper": "^5.0.0",
     "release-it": "^17.10.0"
