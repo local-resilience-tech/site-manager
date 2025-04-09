@@ -7,7 +7,6 @@ use rocket::fs::{FileServer, Options};
 use rocket::response::Redirect;
 use rocket::serde::Deserialize;
 
-mod app_node;
 mod infra;
 mod panda_comms;
 mod repos;

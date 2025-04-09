@@ -2,19 +2,16 @@ use anyhow::Result;
 use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
-use p2panda_core::{Body, PrivateKey, PublicKey};
+use p2panda_core::{PrivateKey, PublicKey};
 use p2panda_net::{NodeAddress, RelayUrl};
 use p2panda_node::api::NodeApi;
 use p2panda_node::extensions::{LogId, NodeExtensions};
 use p2panda_node::node::Node;
-use p2panda_node::topic::{Topic, TopicMap};
+use p2panda_node::topic::TopicMap;
 use p2panda_store::MemoryStore;
-use rocket::tokio::{self, task};
+use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
-use super::messages::Message;
-use super::site_messages::{SiteMessages, SiteRegistration};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 
@@ -108,6 +105,12 @@ impl P2PandaContainer {
         let store = MemoryStore::<LogId, NodeExtensions>::new();
         let topic_map = TopicMap::new();
 
+        println!(
+            "Starting node. Network name: {}, Bootstrap ID: {:?}",
+            network_name,
+            boostrap_node_id.map(|key| key.to_string())
+        );
+
         let (node, _stream_rx, _network_events_rx) = Node::new(
             network_name,
             private_key.clone(),
@@ -163,33 +166,33 @@ impl P2PandaContainer {
     }
 }
 
-async fn announce_site_regularly() {
-    // spawn a task to announce the site every 30 seconds
-    task::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
-        loop {
-            interval.tick().await;
+// async fn announce_site_regularly() {
+//     // spawn a task to announce the site every 30 seconds
+//     task::spawn(async move {
+//         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+//         loop {
+//             interval.tick().await;
 
-            println!("We should publish an operation here, but it's temporarily disabled");
+//             println!("We should publish an operation here, but it's temporarily disabled");
 
-            // let body = build_announce_site_body(&site_name);
-            // publish_operation(Some(body), &mut operation_store, &private_key)
-            //     .await
-            //     .ok();
-        }
-    });
-}
+//             // let body = build_announce_site_body(&site_name);
+//             // publish_operation(Some(body), &mut operation_store, &private_key)
+//             //     .await
+//             //     .ok();
+//         }
+//     });
+// }
 
 fn get_site_name() -> String {
     gethostname().to_string_lossy().to_string()
 }
 
-fn build_announce_site_body(name: &str) -> Body {
-    let message = SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() });
-    let bytes = Message::encode(message).unwrap();
+// fn build_announce_site_body(name: &str) -> Body {
+//     let message = SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() });
+//     let bytes = Message::encode(message).unwrap();
 
-    Body::new(&bytes)
-}
+//     Body::new(&bytes)
+// }
 
 // async fn publish_operation(body: Option<Body>, operation_store: &mut MemoryStore<LogId, NodeExtensions>, private_key: &PrivateKey) -> Result<()> {NodeExtensions
 //     let log_path: LogPath = json!("site_management").into();
