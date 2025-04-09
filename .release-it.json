@@ -21,5 +21,8 @@
         }
       ]
     }
+  },
+  "hooks": {
+    "after:bump": ["cd backend && cargo build"]
   }
 }
