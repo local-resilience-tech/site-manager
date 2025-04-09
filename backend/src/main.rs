@@ -6,6 +6,7 @@ use rocket::fairing::AdHoc;
 use rocket::fs::{FileServer, Options};
 use rocket::response::Redirect;
 use rocket::serde::Deserialize;
+use std::env;
 
 mod infra;
 mod panda_comms;
@@ -39,7 +40,10 @@ struct Config {
 #[launch]
 #[rocket::main]
 async fn rocket() -> _ {
-    let mut rocket = rocket::build();
+    let figment = rocket::Config::figment().merge(("databases.main_db.url", env::var("DATABASE_URL").expect("DATABASE_URL must be set")));
+
+    let mut rocket = rocket::custom(figment);
+
     let config: Config = rocket.figment().extract().expect("config");
 
     // log the config

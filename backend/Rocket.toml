@@ -2,8 +2,5 @@
 frontend_asset_path = ""
 log_level = "normal"
 
-[default.databases.main_db]
-url = "./main.sqlite"
-
 [release]
 frontend_asset_path = "../frontend/dist"
