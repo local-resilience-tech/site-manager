@@ -14,5 +14,4 @@ export type NodeDetails = {
 
 export type BootstrapPeer = {
   node_id: string
-  ip4: string
 }

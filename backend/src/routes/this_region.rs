@@ -42,7 +42,6 @@ async fn bootstrap(
         .as_ref()
         .map(|peer| SimplifiedNodeAddress {
             node_id: peer.node_id.clone(),
-            ip4: peer.ip4.clone(),
         });
 
     repo.set_network_config(&mut db, data.network_name.clone(), peer_address.clone())

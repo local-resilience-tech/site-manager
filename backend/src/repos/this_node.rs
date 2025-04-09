@@ -23,7 +23,6 @@ pub enum ThisNodeError {
 #[derive(Clone)]
 pub struct SimplifiedNodeAddress {
     pub node_id: String,
-    pub ip4: String,
 }
 
 impl ThisNodeRepo {
@@ -80,7 +79,7 @@ impl ThisNodeRepo {
 
         let result = sqlx::query!(
             "
-            SELECT bootstrap_node_id, bootstrap_node_ip4
+            SELECT bootstrap_node_id
             FROM network_configs
             WHERE network_configs.id = ?
             LIMIT 1
@@ -95,10 +94,7 @@ impl ThisNodeRepo {
             None => return Ok(None),
             Some(result) => match result.bootstrap_node_id {
                 None => return Ok(None),
-                Some(node_id) => Ok(Some(SimplifiedNodeAddress {
-                    node_id: node_id,
-                    ip4: result.bootstrap_node_ip4.unwrap(),
-                })),
+                Some(node_id) => Ok(Some(SimplifiedNodeAddress { node_id })),
             },
         }
     }
@@ -112,17 +108,15 @@ impl ThisNodeRepo {
         let bootstrap_node_id = peer_address
             .as_ref()
             .map(|peer| peer.node_id.clone());
-        let bootstrap_ip4 = peer_address.as_ref().map(|peer| peer.ip4.clone());
 
         let _region = sqlx::query!(
             "
             UPDATE network_configs
-            SET network_name = ?, bootstrap_node_id = ?, bootstrap_node_ip4 = ?
+            SET network_name = ?, bootstrap_node_id = ?
             WHERE network_configs.id = ?
             ",
             network_name,
             bootstrap_node_id,
-            bootstrap_ip4,
             NETWORK_CONFIG_ID
         )
         .execute(&mut ***db)

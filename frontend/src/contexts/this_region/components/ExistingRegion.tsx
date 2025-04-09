@@ -17,7 +17,6 @@ export default function ExistingRegion() {
   const onSubmitBootstrapNode = (data: BootstrapNodeData) => {
     const peer: BootstrapPeer = {
       node_id: data.node_id,
-      ip4: data.ip_address,
     }
     regionApi.bootstrap(data.network_name, peer)
 

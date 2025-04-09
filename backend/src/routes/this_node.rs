@@ -59,7 +59,6 @@ async fn restart(panda_container: &State<P2PandaContainer>) -> Result<Json<Strin
 #[serde(crate = "rocket::serde")]
 pub struct BootstrapNodePeer {
     pub node_id: String,
-    pub ip4: String,
 }
 
 #[derive(Deserialize)]

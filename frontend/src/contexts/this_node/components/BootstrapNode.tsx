@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 export interface BootstrapNodeData {
   network_name: string
   node_id: string
-  ip_address: string
 }
 
 export type SubmitBootstrapNodeFunc = (data: BootstrapNodeData) => void
@@ -60,22 +59,6 @@ export default function BootstrapNode({
               maxLength: {
                 value: 64,
                 message: "Must be no more than 64 characters",
-              },
-            })}
-          />
-        </Field>
-        <Field
-          label="Public IP Address"
-          helperText={`An IPv4 address that can be used to communicate with the node above`}
-          invalid={!!errors.ip_address}
-          errorText={errors.ip_address?.message}
-        >
-          <Input
-            {...register("ip_address", {
-              required: "This is required",
-              pattern: {
-                value: /^(\d{1,3}\.){3}\d{1,3}$/,
-                message: "Must be a valid IPv4 address",
               },
             })}
           />
