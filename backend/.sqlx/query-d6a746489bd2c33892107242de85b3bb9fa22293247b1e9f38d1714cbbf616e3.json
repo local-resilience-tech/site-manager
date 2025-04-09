@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE network_configs\n            SET network_name = ?, bootstrap_node_id = ?\n            WHERE network_configs.id = ?\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "d6a746489bd2c33892107242de85b3bb9fa22293247b1e9f38d1714cbbf616e3"
+}
