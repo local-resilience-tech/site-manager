@@ -164,6 +164,26 @@ impl P2PandaContainer {
         let mut node_api_lock = self.node_api.lock().await;
         *node_api_lock = maybe_node_api;
     }
+
+    pub async fn announce_site(&self, site_name: String) -> Result<()> {
+        let node_api = self.node_api.lock().await;
+        let node_api = node_api
+            .as_ref()
+            .ok_or(anyhow::Error::msg("Network not started"))?;
+
+        let public_key = node_api.node.network.node_id();
+        let topic = "site_management";
+        let log_id = "site_management";
+
+        // let body = build_announce_site_body(&site_name);
+        // publish_operation(Some(body), &mut operation_store, &private_key)
+        //     .await
+        //     .ok();
+
+        println!("Announcing site: {}", site_name);
+
+        Ok(())
+    }
 }
 
 // async fn announce_site_regularly() {
