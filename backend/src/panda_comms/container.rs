@@ -3,11 +3,11 @@ use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{PrivateKey, PublicKey};
-use p2panda_net::{NodeAddress, RelayUrl};
+use p2panda_net::{NodeAddress, RelayUrl, SystemEvent};
 use p2panda_node::api::NodeApi;
 use p2panda_node::extensions::{LogId, NodeExtensions};
 use p2panda_node::node::Node;
-use p2panda_node::topic::TopicMap;
+use p2panda_node::topic::{Topic, TopicMap};
 use p2panda_store::MemoryStore;
 use rocket::tokio::{self};
 use std::sync::Arc;
@@ -111,7 +111,7 @@ impl P2PandaContainer {
             boostrap_node_id.map(|key| key.to_string())
         );
 
-        let (node, _stream_rx, _network_events_rx) = Node::new(
+        let (node, mut stream_rx, mut network_events_rx) = Node::new(
             network_name,
             private_key.clone(),
             boostrap_node_id,
@@ -122,7 +122,55 @@ impl P2PandaContainer {
         )
         .await?;
 
-        let node_api = NodeApi::new(node, topic_map);
+        // handle received network events
+        tokio::spawn(async move {
+            println!("Listening for network events...");
+            while let Ok(event) = network_events_rx.recv().await {
+                let event: SystemEvent<Topic> = event;
+                match event {
+                    SystemEvent::GossipJoined { topic_id, peers } => {
+                        println!("Gossip joined: {:?}", topic_id);
+                        println!("Peers: {:?}", peers);
+                    }
+                    SystemEvent::GossipLeft { topic_id } => {
+                        println!("Gossip left: {:?}", topic_id);
+                    }
+                    SystemEvent::GossipNeighborUp { topic_id: _, peer } => {
+                        println!("Gossip neighbor up: {:?}", peer);
+                    }
+                    SystemEvent::GossipNeighborDown { topic_id: _, peer } => {
+                        println!("Gossip neighbor down: {:?}", peer);
+                    }
+                    SystemEvent::PeerDiscovered { peer } => {
+                        println!("Peer discovered: {:?}", peer);
+                    }
+                    SystemEvent::SyncStarted { topic, peer } => {
+                        println!("Sync started: {:?}", topic);
+                        println!("Peer: {:?}", peer);
+                    }
+                    SystemEvent::SyncDone { topic, peer } => {
+                        println!("Sync done: {:?}", topic);
+                        println!("Peer: {:?}", peer);
+                    }
+                    SystemEvent::SyncFailed { topic, peer } => {
+                        println!("Sync failed: {:?}", topic);
+                        println!("Peer: {:?}", peer);
+                    }
+                }
+            }
+            println!("Network events stream closed");
+        });
+
+        // handle received messages
+        tokio::spawn(async move {
+            println!("Listening for messages...");
+            while let Some(message) = stream_rx.recv().await {
+                println!("Received message: {:?}", message);
+            }
+            println!("Message stream closed");
+        });
+
+        let mut node_api = NodeApi::new(node, topic_map);
 
         let public_key = private_key.public_key();
         let topic = "site_management";
@@ -131,6 +179,9 @@ impl P2PandaContainer {
         node_api
             .add_topic_log(&public_key, &log_id, &topic)
             .await?;
+
+        // subscribe to site management topic
+        node_api.subscribe_persisted(topic).await?;
 
         // put the node in the container
         self.set_node_api(Some(node_api)).await;
@@ -166,19 +217,20 @@ impl P2PandaContainer {
     }
 
     pub async fn announce_site(&self, site_name: String) -> Result<()> {
-        let node_api = self.node_api.lock().await;
+        let mut node_api = self.node_api.lock().await;
         let node_api = node_api
-            .as_ref()
+            .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let public_key = node_api.node.network.node_id();
-        let topic = "site_management";
+        let topic_name = "site_management";
         let log_id = "site_management";
 
-        // let body = build_announce_site_body(&site_name);
-        // publish_operation(Some(body), &mut operation_store, &private_key)
-        //     .await
-        //     .ok();
+        let payload: serde_json::Value = serde_json::json!("foobar");
+        let payload = serde_json::to_vec(&payload)?;
+
+        node_api
+            .publish_persisted(topic_name, &payload, Some(log_id), None)
+            .await?;
 
         println!("Announcing site: {}", site_name);
 
