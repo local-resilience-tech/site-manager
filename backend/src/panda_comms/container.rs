@@ -14,6 +14,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
+const TOPIC_NAME: &str = "site_management";
+const LOG_ID: &str = "site_management";
 
 #[derive(Default)]
 pub struct P2PandaContainer {
@@ -173,15 +175,13 @@ impl P2PandaContainer {
         let mut node_api = NodeApi::new(node, topic_map);
 
         let public_key = private_key.public_key();
-        let topic = "site_management";
-        let log_id = "site_management";
 
         node_api
-            .add_topic_log(&public_key, &log_id, &topic)
+            .add_topic_log(&public_key, TOPIC_NAME, LOG_ID)
             .await?;
 
         // subscribe to site management topic
-        node_api.subscribe_persisted(topic).await?;
+        node_api.subscribe_persisted(TOPIC_NAME).await?;
 
         // put the node in the container
         self.set_node_api(Some(node_api)).await;
@@ -222,14 +222,11 @@ impl P2PandaContainer {
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let topic_name = "site_management";
-        let log_id = "site_management";
-
         let payload: serde_json::Value = serde_json::json!("foobar");
         let payload = serde_json::to_vec(&payload)?;
 
         node_api
-            .publish_persisted(topic_name, &payload, Some(log_id), None)
+            .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), None)
             .await?;
 
         println!("Announcing site: {}", site_name);
