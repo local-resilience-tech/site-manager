@@ -225,8 +225,13 @@ impl P2PandaContainer {
         let payload: serde_json::Value = serde_json::json!("foobar");
         let payload = serde_json::to_vec(&payload)?;
 
+        let extensions = NodeExtensions {
+            log_id: Some(LogId(LOG_ID.to_string())),
+            ..Default::default()
+        };
+
         node_api
-            .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), None)
+            .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), Some(extensions))
             .await?;
 
         println!("Announcing site: {}", site_name);
