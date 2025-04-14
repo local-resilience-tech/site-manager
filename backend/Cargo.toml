@@ -5,23 +5,20 @@ edition = "2021"
 publish = false
 
 [dependencies]
-iroh-io = "0.6.1"
-experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "929c9861ac50d4ea27631e303375100c5f02ff88" }
-p2panda-blobs = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
-p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
-p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
-p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
-p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87" }
-p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87", features = [
-  "mdns",
-] }
-p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "79b7682deb5f253224745b7ad9a7faab90e89e87", features = [
-  "log-sync",
-] }
+iroh = "0.34.1"
+iroh-io = "0.6.2"
+experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "95f3a74c298d8b663fee2f3339dbce5f812ba26f" }
+p2panda-blobs = "0.3.1"
+p2panda-core = "0.3.1"
+p2panda-net = "0.3.1"
+p2panda-store = "0.3.1"
+p2panda-stream = "0.3.1"
+p2panda-discovery = { version = "0.3.1", features = ["mdns"] }
+p2panda-sync = { version = "0.3.1", features = ["log-sync"] }
 gethostname = "0.5.0"
 serde = "1.0.216"
 serde_json = "1"
-anyhow = "1.0.94"
+anyhow = "1.0.98"
 rand = "0.8.5"
 ciborium = "0.2.2"
 rocket_db_pools = { version = "0.2.0", features = ["sqlx_sqlite"] }
@@ -29,7 +26,6 @@ sqlx = { version = "0.7.4", features = ["macros", "migrate"] }
 dotenvy = "0.15.7"
 thiserror = "2.0.9"
 uuid = { version = "1.11.0", features = ["v4"] }
-iroh = "^0.33.0"
 hex = "0.4.3"
 rocket_cors = "0.6.0"
 tokio-util = "0.7.10"
