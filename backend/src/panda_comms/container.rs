@@ -134,19 +134,25 @@ impl P2PandaContainer {
                 match event {
                     SystemEvent::GossipJoined { topic_id, peers } => {
                         println!("Gossip joined: {:?}", topic_id);
-                        println!("Peers: {:?}", peers);
+                        println!(
+                            "Peers: {:?}",
+                            peers
+                                .iter()
+                                .map(|peer| peer.to_hex())
+                                .collect::<Vec<_>>()
+                        );
                     }
                     SystemEvent::GossipLeft { topic_id } => {
                         println!("Gossip left: {:?}", topic_id);
                     }
                     SystemEvent::GossipNeighborUp { topic_id: _, peer } => {
-                        println!("Gossip neighbor up: {:?}", peer);
+                        println!("Gossip neighbor up: {:?}", peer.to_hex());
                     }
                     SystemEvent::GossipNeighborDown { topic_id: _, peer } => {
-                        println!("Gossip neighbor down: {:?}", peer);
+                        println!("Gossip neighbor down: {:?}", peer.to_hex());
                     }
                     SystemEvent::PeerDiscovered { peer } => {
-                        println!("Peer discovered: {:?}", peer);
+                        println!("Peer discovered: {:?}", peer.to_hex());
                         let mut node_api = node_api.lock().await;
                         let node_api = node_api.as_mut().unwrap();
 
@@ -156,16 +162,13 @@ impl P2PandaContainer {
                             .unwrap();
                     }
                     SystemEvent::SyncStarted { topic, peer } => {
-                        println!("Sync started: {:?}", topic);
-                        println!("Peer: {:?}", peer);
+                        println!("Sync started: topic {:?}, peer {:?}", topic, peer.to_hex());
                     }
                     SystemEvent::SyncDone { topic, peer } => {
-                        println!("Sync done: {:?}", topic);
-                        println!("Peer: {:?}", peer);
+                        println!("Sync done: topic {:?}, peer {:?}", topic, peer.to_hex());
                     }
                     SystemEvent::SyncFailed { topic, peer } => {
-                        println!("Sync failed: {:?}", topic);
-                        println!("Peer: {:?}", peer);
+                        println!("Sync failed: topic {:?}, peer {:?}", topic, peer.to_hex());
                     }
                 }
             }
