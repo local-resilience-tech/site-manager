@@ -7,6 +7,7 @@ use p2panda_net::{NodeAddress, RelayUrl, SystemEvent};
 use p2panda_node::api::NodeApi;
 use p2panda_node::extensions::{LogId, NodeExtensions};
 use p2panda_node::node::Node;
+use p2panda_node::stream::EventData;
 use p2panda_node::topic::{Topic, TopicMap};
 use p2panda_store::MemoryStore;
 use rocket::tokio::{self};
@@ -178,8 +179,23 @@ impl P2PandaContainer {
         // handle received messages
         tokio::spawn(async move {
             println!("Listening for messages...");
-            while let Some(message) = stream_rx.recv().await {
-                println!("Received message: {:?}", message);
+            while let Some(event) = stream_rx.recv().await {
+                println!("Received message: {:?}", event);
+                let data: EventData = event.data;
+
+                match data {
+                    EventData::Application(payload) => {
+                        let payload: serde_json::Value = serde_json::from_slice(&payload).unwrap();
+                        println!("  Application Payload: {:?}", payload);
+                    }
+                    EventData::Ephemeral(payload) => {
+                        let payload: serde_json::Value = serde_json::from_slice(&payload).unwrap();
+                        println!("  Ephemeral Payload: {:?}", payload);
+                    }
+                    EventData::Error(error) => {
+                        println!("  Stream Error: {:?}", error);
+                    }
+                }
             }
             println!("Message stream closed");
         });
@@ -236,7 +252,7 @@ impl P2PandaContainer {
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let payload: serde_json::Value = serde_json::json!("foobar");
+        let payload: serde_json::Value = serde_json::json!(site_name);
         let payload = serde_json::to_vec(&payload)?;
 
         let extensions = NodeExtensions {
@@ -254,72 +270,9 @@ impl P2PandaContainer {
     }
 }
 
-// async fn announce_site_regularly() {
-//     // spawn a task to announce the site every 30 seconds
-//     task::spawn(async move {
-//         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
-//         loop {
-//             interval.tick().await;
-
-//             println!("We should publish an operation here, but it's temporarily disabled");
-
-//             // let body = build_announce_site_body(&site_name);
-//             // publish_operation(Some(body), &mut operation_store, &private_key)
-//             //     .await
-//             //     .ok();
-//         }
-//     });
-// }
-
 fn get_site_name() -> String {
     gethostname().to_string_lossy().to_string()
 }
-
-// fn build_announce_site_body(name: &str) -> Body {
-//     let message = SiteMessages::SiteRegistration(SiteRegistration { name: name.to_string() });
-//     let bytes = Message::encode(message).unwrap();
-
-//     Body::new(&bytes)
-// }
-
-// async fn publish_operation(body: Option<Body>, operation_store: &mut MemoryStore<LogId, NodeExtensions>, private_key: &PrivateKey) -> Result<()> {NodeExtensions
-//     let log_path: LogPath = json!("site_management").into();
-
-//     let extensions = NodeExtensions {
-//         log_path: Some(log_path),
-//         ..Default::default()
-//     };
-//     let body_bytes: Option<Vec<u8>> = body.map(|body| body.to_bytes());
-//     let body_bytes_array = body_bytes
-//         .as_ref()
-//         .map(|body| body.as_slice())
-//         .unwrap_or(&[]);
-
-//     let (_header, _body) = create_operation(&mut operation_store.clone(), &private_key, extensions, Some(body_bytes_array)).await;
-
-//     // let ingest_result = ingest_operation(&mut operation_store.clone(), header, body, header_bytes, &topic.id(), false).await?;
-
-//     // match ingest_result {
-//     //     IngestResult::Complete(operation) => {
-//     //         // topic_map
-//     //         //     .add_author(topic, operation.header.public_key)
-//     //         //     .await;
-
-//     //         if network_tx
-//     //             .send(ToNetwork::Message { bytes: gossip_message_bytes })
-//     //             .await
-//     //             .is_err()
-//     //         {
-//     //             println!("Failed to send gossip message");
-//     //         } else {
-//     //             println!("  Publish Operation - Sent gossip message: {:?}", prepare_for_logging(operation));
-//     //         }
-//     //     }
-//     //     _ => unreachable!(),
-//     // }
-
-//     Ok(())
-// }
 
 // TODO: This should be in p2panda-core, submit a PR
 pub fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
