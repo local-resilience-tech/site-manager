@@ -100,7 +100,7 @@ impl P2PandaContainer {
             .await
     }
 
-    async fn start_for(&self, _site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
+    async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
         let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
 
@@ -124,6 +124,8 @@ impl P2PandaContainer {
         )
         .await?;
 
+        let node_api = self.node_api.clone();
+
         // handle received network events
         tokio::spawn(async move {
             println!("Listening for network events...");
@@ -145,6 +147,13 @@ impl P2PandaContainer {
                     }
                     SystemEvent::PeerDiscovered { peer } => {
                         println!("Peer discovered: {:?}", peer);
+                        let mut node_api = node_api.lock().await;
+                        let node_api = node_api.as_mut().unwrap();
+
+                        node_api
+                            .add_topic_log(&peer, TOPIC_NAME, LOG_ID)
+                            .await
+                            .unwrap();
                     }
                     SystemEvent::SyncStarted { topic, peer } => {
                         println!("Sync started: {:?}", topic);
@@ -185,6 +194,8 @@ impl P2PandaContainer {
 
         // put the node in the container
         self.set_node_api(Some(node_api)).await;
+
+        self.announce_site(site_name.clone()).await?;
 
         Ok(())
     }
