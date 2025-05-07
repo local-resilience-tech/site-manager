@@ -1,5 +1,4 @@
 use anyhow::Result;
-use gethostname::gethostname;
 use iroh::NodeAddr;
 use p2panda_core::identity::PUBLIC_KEY_LEN;
 use p2panda_core::{PrivateKey, PublicKey};

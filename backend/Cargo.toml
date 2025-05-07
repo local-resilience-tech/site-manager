@@ -15,7 +15,6 @@ p2panda-store = "0.3.1"
 p2panda-stream = "0.3.1"
 p2panda-discovery = { version = "0.3.1", features = ["mdns"] }
 p2panda-sync = { version = "0.3.1", features = ["log-sync"] }
-gethostname = "0.5.0"
 serde = "1.0.216"
 serde_json = "1"
 anyhow = "1.0.98"
