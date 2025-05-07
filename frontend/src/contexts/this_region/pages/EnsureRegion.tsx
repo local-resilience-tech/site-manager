@@ -6,6 +6,7 @@ import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
 import { Outlet } from "react-router-dom"
+import { RegionContext } from "../provider_contexts"
 
 const regionApi = new ThisRegionApi()
 
@@ -20,13 +21,8 @@ export default function EnsureRegion({
 }: {
   children?: React.ReactNode
 }) {
-  const [networkId, setNetworkId] = useState<string | null>(null)
+  const [regionDetails, setRegionDetails] = useState<RegionDetails | null>(null)
   const [loading, setLoading] = useState(true)
-
-  const updateNetworkId = (networkId: string | null) => {
-    console.log("Updated network id", networkId)
-    setNetworkId(networkId)
-  }
 
   const withLoading = async (fn: () => Promise<void>) => {
     setLoading(true)
@@ -38,14 +34,17 @@ export default function EnsureRegion({
     withLoading(async () => {
       const newRegion = await getRegion()
       console.log("EFFECT: fetchRegion", newRegion)
-      updateNetworkId(newRegion?.network_id || null)
+      setRegionDetails(newRegion)
     })
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
     regionApi.bootstrap(data.name, null).then((result: ApiResult<any, any>) => {
       if ("Ok" in result) {
-        updateNetworkId(data.name)
+        const newRegion: RegionDetails = {
+          network_id: result.Ok.id,
+        }
+        setRegionDetails(newRegion)
       } else {
         console.log("Failed to bootstrap", result)
       }
@@ -68,8 +67,12 @@ export default function EnsureRegion({
 
   return (
     <Container maxWidth={"2xl"}>
-      {networkId == null && <SetRegion onSubmitNewRegion={onSubmitNewRegion} />}
-      {networkId != null && (children || <Outlet />)}
+      {regionDetails == null && (
+        <SetRegion onSubmitNewRegion={onSubmitNewRegion} />
+      )}
+      <RegionContext.Provider value={regionDetails}>
+        {regionDetails != null && (children || <Outlet />)}
+      </RegionContext.Provider>
     </Container>
   )
 }
