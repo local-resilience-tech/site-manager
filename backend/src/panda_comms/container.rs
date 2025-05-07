@@ -75,8 +75,7 @@ impl P2PandaContainer {
     }
 
     pub async fn start(&self) -> Result<()> {
-        let site_name = get_site_name();
-        println!("Starting client for site: {}", site_name);
+        println!("Starting client");
 
         let params = self.get_params().await;
 
@@ -97,11 +96,11 @@ impl P2PandaContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(site_name, private_key, network_name, boostrap_node_id)
+        self.start_for(private_key, network_name, boostrap_node_id)
             .await
     }
 
-    async fn start_for(&self, site_name: String, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
+    async fn start_for(&self, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
         let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
 
@@ -140,8 +139,6 @@ impl P2PandaContainer {
         self.set_node_api(Some(node_api)).await;
 
         self.listen_for_messages(stream_rx, network_events_rx);
-
-        self.announce_site(site_name.clone()).await?;
 
         Ok(())
     }
@@ -278,10 +275,6 @@ impl P2PandaContainer {
             println!("Message stream closed");
         });
     }
-}
-
-fn get_site_name() -> String {
-    gethostname().to_string_lossy().to_string()
 }
 
 // TODO: This should be in p2panda-core, submit a PR
