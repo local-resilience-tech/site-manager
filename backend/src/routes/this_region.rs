@@ -5,7 +5,7 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::{build_public_key_from_hex, P2PandaContainer};
-use crate::repos::entities::Region;
+use crate::repos::entities::{Region, Site};
 use crate::repos::this_node::{SimplifiedNodeAddress, ThisNodeError, ThisNodeRepo};
 
 use super::this_node::BootstrapNodeData;
@@ -26,6 +26,23 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisNo
                 Json(None)
             }
         })
+}
+
+#[get("/sites", format = "json")]
+async fn sites() -> Result<Json<Vec<Site>>, ThisNodeError> {
+    // create dummy data
+    let sites = vec![
+        Site {
+            id: "1".to_string(),
+            name: "Site 1".to_string(),
+        },
+        Site {
+            id: "2".to_string(),
+            name: "Site 2".to_string(),
+        },
+    ];
+
+    Ok(Json(sites))
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]
@@ -68,5 +85,5 @@ async fn bootstrap(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![show, bootstrap]
+    routes![show, sites, bootstrap]
 }
