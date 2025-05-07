@@ -4,7 +4,7 @@ import NewSite, { NewSiteData } from "../components/NewSite"
 import { SiteDetails } from "../types"
 import ThisSiteApi from "../api"
 import { ApiResult } from "../../shared/types"
-import { Loading } from "../../shared"
+import { Loading, useLoading } from "../../shared"
 
 const api = new ThisSiteApi()
 
@@ -16,17 +16,11 @@ const getSite = async (): Promise<SiteDetails | null> => {
 
 export default function EnsureSite() {
   const [site, setSite] = useState<SiteDetails | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, withLoading] = useLoading(true)
 
   const updateSite = (newSite: SiteDetails | null) => {
     console.log("Updating site", newSite)
     setSite(newSite)
-  }
-
-  const withLoading = async (fn: () => Promise<void>) => {
-    setLoading(true)
-    await fn()
-    setLoading(false)
   }
 
   const fetchSite = async () => {

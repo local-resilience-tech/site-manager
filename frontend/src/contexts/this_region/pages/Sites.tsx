@@ -4,7 +4,7 @@ import { RegionContext } from "../provider_contexts"
 import SitesList from "../components/SitesList"
 import { SiteDetails } from "../../this_site"
 import ThisRegionApi from "../api"
-import { Loading } from "../../shared"
+import { Loading, useLoading } from "../../shared"
 
 const api = new ThisRegionApi()
 
@@ -22,13 +22,7 @@ export default function Sites() {
   }
 
   const [sites, setSites] = useState<SiteDetails[] | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const withLoading = async (fn: () => Promise<void>) => {
-    setLoading(true)
-    await fn()
-    setLoading(false)
-  }
+  const [loading, withLoading] = useLoading(true)
 
   const fetchSites = async () => {
     withLoading(async () => {

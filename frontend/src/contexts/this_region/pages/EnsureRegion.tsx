@@ -7,7 +7,7 @@ import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
 import { Outlet } from "react-router-dom"
 import { RegionContext } from "../provider_contexts"
-import { Loading } from "../../shared"
+import { Loading, useLoading } from "../../shared"
 
 const regionApi = new ThisRegionApi()
 
@@ -23,13 +23,7 @@ export default function EnsureRegion({
   children?: React.ReactNode
 }) {
   const [regionDetails, setRegionDetails] = useState<RegionDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const withLoading = async (fn: () => Promise<void>) => {
-    setLoading(true)
-    await fn()
-    setLoading(false)
-  }
+  const [loading, withLoading] = useLoading(true)
 
   const fetchRegion = async () => {
     withLoading(async () => {
