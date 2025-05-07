@@ -1,9 +1,10 @@
-import { Center, Container, Heading, Spinner, VStack } from "@chakra-ui/react"
+import { Container, Heading, VStack } from "@chakra-ui/react"
 import { useContext, useEffect, useState } from "react"
 import { RegionContext } from "../provider_contexts"
 import SitesList from "../components/SitesList"
 import { SiteDetails } from "../../this_site"
 import ThisRegionApi from "../api"
+import { Loading } from "../../shared"
 
 const api = new ThisRegionApi()
 
@@ -41,15 +42,7 @@ export default function Sites() {
     if (sites == null) fetchSites()
   }, [])
 
-  if (loading) {
-    return (
-      <Container maxWidth={"2xl"}>
-        <Center>
-          <Spinner size="lg" opacity={0.5} />
-        </Center>
-      </Container>
-    )
-  }
+  if (loading) return <Loading />
 
   return (
     <Container maxWidth={"2xl"}>

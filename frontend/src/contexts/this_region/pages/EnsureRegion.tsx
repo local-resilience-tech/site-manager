@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 import { RegionDetails } from "../types"
-import { Center, Container, Spinner } from "@chakra-ui/react"
+import { Container } from "@chakra-ui/react"
 import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
 import { Outlet } from "react-router-dom"
 import { RegionContext } from "../provider_contexts"
+import { Loading } from "../../shared"
 
 const regionApi = new ThisRegionApi()
 
@@ -55,15 +56,7 @@ export default function EnsureRegion({
     fetchRegion()
   }, [])
 
-  if (loading) {
-    return (
-      <Container maxWidth={"2xl"}>
-        <Center>
-          <Spinner size="lg" opacity={0.5} />
-        </Center>
-      </Container>
-    )
-  }
+  if (loading) return <Loading />
 
   return (
     <Container maxWidth={"2xl"}>

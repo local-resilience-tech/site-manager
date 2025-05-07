@@ -1,9 +1,10 @@
-import { Center, Container, Spinner } from "@chakra-ui/react"
+import { Container } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import NewSite, { NewSiteData } from "../components/NewSite"
 import { SiteDetails } from "../types"
 import ThisSiteApi from "../api"
 import { ApiResult } from "../../shared/types"
+import { Loading } from "../../shared"
 
 const api = new ThisSiteApi()
 
@@ -32,7 +33,8 @@ export default function EnsureSite() {
     withLoading(async () => {
       console.log("EFFECT: fetchSite")
       const newSite = await getSite()
-      updateSite(newSite)    })
+      updateSite(newSite)
+    })
   }
 
   useEffect(() => {
@@ -45,15 +47,7 @@ export default function EnsureSite() {
     })
   }
 
-  if (loading) {
-    return (
-      <Container maxWidth={"2xl"}>
-        <Center>
-          <Spinner size="lg" opacity={0.5} />
-        </Center>
-      </Container>
-    )
-  }
+  if (loading) return <Loading />
 
   return (
     <Container maxWidth={"2xl"}>
