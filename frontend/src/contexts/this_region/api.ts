@@ -9,7 +9,7 @@ export default class ThisRegionApi extends BaseApi {
     return this.apiCall("this_region")
   }
 
-  sites(): Promise<ApiResult<[SiteDetails], any>> {
+  sites(): Promise<ApiResult<SiteDetails[], any>> {
     return this.apiCall("this_region/sites")
   }
 

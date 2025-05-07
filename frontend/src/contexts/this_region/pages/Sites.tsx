@@ -7,7 +7,7 @@ import ThisRegionApi from "../api"
 
 const api = new ThisRegionApi()
 
-const getSites = async (): Promise<[SiteDetails] | null> => {
+const getSites = async (): Promise<SiteDetails[] | null> => {
   const result = await api.sites()
   if ("Ok" in result) return result.Ok
   return null
@@ -20,7 +20,7 @@ export default function Sites() {
     return <Container>No region</Container>
   }
 
-  const [sites, setSites] = useState<[SiteDetails] | null>(null)
+  const [sites, setSites] = useState<SiteDetails[] | null>(null)
   const [loading, setLoading] = useState(true)
 
   const withLoading = async (fn: () => Promise<void>) => {
@@ -60,7 +60,7 @@ export default function Sites() {
         <Heading as="h2" size="lg">
           Sites
         </Heading>
-        <SitesList />
+        {sites && <SitesList sites={sites} />}
       </VStack>
     </Container>
   )
