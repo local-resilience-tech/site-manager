@@ -7,12 +7,12 @@ use p2panda_net::{NodeAddress, RelayUrl, SystemEvent};
 use p2panda_node::api::NodeApi;
 use p2panda_node::extensions::{LogId, NodeExtensions};
 use p2panda_node::node::Node;
-use p2panda_node::stream::EventData;
+use p2panda_node::stream::{EventData, StreamEvent};
 use p2panda_node::topic::{Topic, TopicMap};
 use p2panda_store::MemoryStore;
 use rocket::tokio::{self};
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{broadcast, mpsc, Mutex};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "site_management";
@@ -114,7 +114,7 @@ impl P2PandaContainer {
             boostrap_node_id.map(|key| key.to_string())
         );
 
-        let (node, mut stream_rx, mut network_events_rx) = Node::new(
+        let (node, stream_rx, network_events_rx) = Node::new(
             network_name,
             private_key.clone(),
             boostrap_node_id,
@@ -125,9 +125,87 @@ impl P2PandaContainer {
         )
         .await?;
 
+        let mut node_api = NodeApi::new(node, topic_map);
+
+        let public_key = private_key.public_key();
+
+        node_api
+            .add_topic_log(&public_key, TOPIC_NAME, LOG_ID)
+            .await?;
+
+        // subscribe to site management topic
+        node_api.subscribe_persisted(TOPIC_NAME).await?;
+
+        // put the node in the container
+        self.set_node_api(Some(node_api)).await;
+
+        self.listen_for_messages(stream_rx, network_events_rx);
+
+        self.announce_site(site_name.clone()).await?;
+
+        Ok(())
+    }
+
+    pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let node_api = self.node_api.lock().await;
+        let node_api = node_api.as_ref().ok_or("Network not started")?;
+
+        let node_id = node_api.node.network.node_id();
+        Ok(node_id.to_string())
+    }
+
+    pub async fn get_node_addr(&self) -> NodeAddr {
+        let node_api = self.node_api.lock().await;
+        let node_api = node_api.as_ref().unwrap();
+        let network = &node_api.node.network;
+        let endpoint = network.endpoint();
+        endpoint.node_addr().await.unwrap()
+    }
+
+    pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
+        let node_api = self.node_api.lock().await;
+        let node_api = node_api.as_ref().unwrap();
+        node_api.node.network.known_peers().await
+    }
+
+    async fn set_node_api(&self, maybe_node_api: Option<NodeApi<NodeExtensions>>) {
+        let mut node_api_lock = self.node_api.lock().await;
+        *node_api_lock = maybe_node_api;
+    }
+
+    pub async fn announce_site(&self, site_name: String) -> Result<()> {
+        let mut node_api = self.node_api.lock().await;
+        let node_api = node_api
+            .as_mut()
+            .ok_or(anyhow::Error::msg("Network not started"))?;
+
+        let payload: serde_json::Value = serde_json::json!(site_name);
+        let payload = serde_json::to_vec(&payload)?;
+
+        let extensions = NodeExtensions {
+            log_id: Some(LogId(LOG_ID.to_string())),
+            ..Default::default()
+        };
+
+        node_api
+            .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), Some(extensions))
+            .await?;
+
+        println!("Announcing site: {}", site_name);
+
+        Ok(())
+    }
+
+    fn listen_for_messages(
+        &self,
+        mut stream_rx: mpsc::Receiver<StreamEvent<NodeExtensions>>,
+        mut network_events_rx: broadcast::Receiver<SystemEvent<Topic>>,
+    ) {
         let node_api = self.node_api.clone();
 
-        // handle received network events
+        // handle received network events. This exists mainly for debugging
+        // at the moment, but the addition of a peer to the topic map on the
+        // PeerDiscovered event is important.
         tokio::spawn(async move {
             println!("Listening for network events...");
             while let Ok(event) = network_events_rx.recv().await {
@@ -199,74 +277,6 @@ impl P2PandaContainer {
             }
             println!("Message stream closed");
         });
-
-        let mut node_api = NodeApi::new(node, topic_map);
-
-        let public_key = private_key.public_key();
-
-        node_api
-            .add_topic_log(&public_key, TOPIC_NAME, LOG_ID)
-            .await?;
-
-        // subscribe to site management topic
-        node_api.subscribe_persisted(TOPIC_NAME).await?;
-
-        // put the node in the container
-        self.set_node_api(Some(node_api)).await;
-
-        self.announce_site(site_name.clone()).await?;
-
-        Ok(())
-    }
-
-    pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
-        let node_api = self.node_api.lock().await;
-        let node_api = node_api.as_ref().ok_or("Network not started")?;
-
-        let node_id = node_api.node.network.node_id();
-        Ok(node_id.to_string())
-    }
-
-    pub async fn get_node_addr(&self) -> NodeAddr {
-        let node_api = self.node_api.lock().await;
-        let node_api = node_api.as_ref().unwrap();
-        let network = &node_api.node.network;
-        let endpoint = network.endpoint();
-        endpoint.node_addr().await.unwrap()
-    }
-
-    pub async fn known_peers(&self) -> Result<Vec<NodeAddress>> {
-        let node_api = self.node_api.lock().await;
-        let node_api = node_api.as_ref().unwrap();
-        node_api.node.network.known_peers().await
-    }
-
-    async fn set_node_api(&self, maybe_node_api: Option<NodeApi<NodeExtensions>>) {
-        let mut node_api_lock = self.node_api.lock().await;
-        *node_api_lock = maybe_node_api;
-    }
-
-    pub async fn announce_site(&self, site_name: String) -> Result<()> {
-        let mut node_api = self.node_api.lock().await;
-        let node_api = node_api
-            .as_mut()
-            .ok_or(anyhow::Error::msg("Network not started"))?;
-
-        let payload: serde_json::Value = serde_json::json!(site_name);
-        let payload = serde_json::to_vec(&payload)?;
-
-        let extensions = NodeExtensions {
-            log_id: Some(LogId(LOG_ID.to_string())),
-            ..Default::default()
-        };
-
-        node_api
-            .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), Some(extensions))
-            .await?;
-
-        println!("Announcing site: {}", site_name);
-
-        Ok(())
     }
 }
 
