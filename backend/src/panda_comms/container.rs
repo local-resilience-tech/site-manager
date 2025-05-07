@@ -13,6 +13,8 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
+use crate::panda_comms::site_events::{SiteAnnounced, SiteEventPayload};
+
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "site_management";
 const LOG_ID: &str = "site_management";
@@ -175,8 +177,10 @@ impl P2PandaContainer {
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let payload: serde_json::Value = serde_json::json!(site_name);
-        let payload = serde_json::to_vec(&payload)?;
+        let site_announced = SiteAnnounced { name: site_name.clone() };
+        let event_payload = SiteEventPayload::SiteAnnounced(site_announced);
+
+        let payload = serde_json::to_vec(&event_payload)?;
 
         let extensions = NodeExtensions {
             log_id: Some(LogId(LOG_ID.to_string())),
@@ -259,6 +263,12 @@ impl P2PandaContainer {
 
                 match data {
                     EventData::Application(payload) => {
+                        let site_event: Result<SiteEventPayload, _> = serde_json::from_slice(&payload);
+                        match site_event {
+                            Ok(event) => println!("  Site Event: {:?}", event),
+                            Err(err) => println!("  Failed to parse Site Event: {:?}", err),
+                        }
+
                         let payload: serde_json::Value = serde_json::from_slice(&payload).unwrap();
                         println!("  Application Payload: {:?}", payload);
                     }
