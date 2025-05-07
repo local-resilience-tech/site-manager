@@ -5,6 +5,7 @@ import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { ApiResult } from "../../shared/types"
+import { Outlet } from "react-router-dom"
 
 const regionApi = new ThisRegionApi()
 
@@ -17,7 +18,7 @@ const getRegion = async (): Promise<RegionDetails | null> => {
 export default function EnsureRegion({
   children,
 }: {
-  children: React.ReactNode
+  children?: React.ReactNode
 }) {
   const [networkId, setNetworkId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -68,7 +69,7 @@ export default function EnsureRegion({
   return (
     <Container maxWidth={"2xl"}>
       {networkId == null && <SetRegion onSubmitNewRegion={onSubmitNewRegion} />}
-      {networkId != null && children}
+      {networkId != null && (children || <Outlet />)}
     </Container>
   )
 }

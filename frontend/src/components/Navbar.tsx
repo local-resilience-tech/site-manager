@@ -32,9 +32,14 @@ export default function Navbar() {
                   P2Panda
                 </Button>
               </Link>
-              <Link to="/apps">
+              <Link to="/sites">
                 <Button colorPalette="blue" variant="ghost">
-                  Apps
+                  Sites
+                </Button>
+              </Link>
+              <Link to="/this_site">
+                <Button colorPalette="blue" variant="ghost">
+                  This Site
                 </Button>
               </Link>
             </Box>
