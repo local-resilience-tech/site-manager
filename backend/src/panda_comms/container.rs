@@ -13,7 +13,7 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
-use super::site_events::{SiteAnnounced, SiteEvent, SiteEventPayload};
+use super::site_events::{SiteAnnounced, SiteEvent, SiteEventHeader, SiteEventPayload};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "site_management";
@@ -274,12 +274,16 @@ impl P2PandaContainer {
                     EventData::Application(payload) => {
                         let site_event: Result<SiteEventPayload, _> = serde_json::from_slice(&payload);
                         match site_event {
-                            Ok(event) => {
-                                println!("  Parsed SiteEvent: {:?}", event);
+                            Ok(site_event_payload) => {
+                                println!("  Parsed SiteEvent: {:?}", site_event_payload);
+
+                                let header = event.header.unwrap();
 
                                 // emit to the event handler
-
-                                let event = SiteEvent::new(event);
+                                let site_event_header = SiteEventHeader {
+                                    author_node_id: header.public_key.to_hex(),
+                                };
+                                let event = SiteEvent::new(site_event_header, site_event_payload);
                                 let send_result = events_tx.send(event).await;
 
                                 if let Err(err) = send_result {

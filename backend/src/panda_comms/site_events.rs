@@ -9,12 +9,18 @@ pub enum SiteEventPayload {
 }
 
 #[derive(Debug)]
+pub struct SiteEventHeader {
+    pub author_node_id: String,
+}
+
+#[derive(Debug)]
 pub struct SiteEvent {
-    payload: SiteEventPayload,
+    pub header: SiteEventHeader,
+    pub payload: SiteEventPayload,
 }
 
 impl SiteEvent {
-    pub fn new(payload: SiteEventPayload) -> Self {
-        SiteEvent { payload }
+    pub fn new(header: SiteEventHeader, payload: SiteEventPayload) -> Self {
+        SiteEvent { header, payload }
     }
 }
