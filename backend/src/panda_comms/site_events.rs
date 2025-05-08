@@ -7,3 +7,13 @@ pub struct SiteAnnounced {
 pub enum SiteEventPayload {
     SiteAnnounced(SiteAnnounced),
 }
+
+pub struct SiteEvent {
+    payload: SiteEventPayload,
+}
+
+impl SiteEvent {
+    pub fn new(payload: SiteEventPayload) -> Self {
+        SiteEvent { payload }
+    }
+}

@@ -13,16 +13,16 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
-use crate::panda_comms::site_events::{SiteAnnounced, SiteEventPayload};
+use super::site_events::{SiteAnnounced, SiteEvent, SiteEventPayload};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "site_management";
 const LOG_ID: &str = "site_management";
 
-#[derive(Default)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
     node_api: Arc<Mutex<Option<NodeApi<NodeExtensions>>>>,
+    events_tx: mpsc::Sender<SiteEvent>,
 }
 
 #[derive(Default, Clone)]
@@ -33,6 +33,13 @@ pub struct NodeParams {
 }
 
 impl P2PandaContainer {
+    pub fn new(events_tx: mpsc::Sender<SiteEvent>) -> Self {
+        let params = Arc::new(Mutex::new(NodeParams::default()));
+        let node_api = Arc::new(Mutex::new(None));
+
+        P2PandaContainer { params, node_api, events_tx }
+    }
+
     pub async fn get_params(&self) -> NodeParams {
         let params_lock = self.params.lock().await;
         params_lock.clone()
@@ -254,6 +261,8 @@ impl P2PandaContainer {
             println!("Network events stream closed");
         });
 
+        let events_tx = self.events_tx.clone();
+
         // handle received messages
         tokio::spawn(async move {
             println!("Listening for messages...");
@@ -265,12 +274,20 @@ impl P2PandaContainer {
                     EventData::Application(payload) => {
                         let site_event: Result<SiteEventPayload, _> = serde_json::from_slice(&payload);
                         match site_event {
-                            Ok(event) => println!("  Site Event: {:?}", event),
+                            Ok(event) => {
+                                println!("  Parsed SiteEvent: {:?}", event);
+
+                                // emit to the event handler
+
+                                let event = SiteEvent::new(event);
+                                let send_result = events_tx.send(event).await;
+
+                                if let Err(err) = send_result {
+                                    println!("  Failed to send event: {:?}", err);
+                                }
+                            }
                             Err(err) => println!("  Failed to parse Site Event: {:?}", err),
                         }
-
-                        let payload: serde_json::Value = serde_json::from_slice(&payload).unwrap();
-                        println!("  Application Payload: {:?}", payload);
                     }
                     EventData::Ephemeral(payload) => {
                         let payload: serde_json::Value = serde_json::from_slice(&payload).unwrap();

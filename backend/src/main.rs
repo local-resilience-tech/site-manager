@@ -1,13 +1,18 @@
+use events::event_handler::EventHandler;
 use infra::db::{run_migrations, MainDb};
 use infra::spa_server::SpaServer;
 use panda_comms::container::P2PandaContainer;
 use panda_comms::fairing::P2PandaCommsFairing;
+use panda_comms::site_events::SiteEvent;
 use rocket::fairing::AdHoc;
 use rocket::fs::{FileServer, Options};
 use rocket::response::Redirect;
 use rocket::serde::Deserialize;
+use rocket::tokio;
 use std::env;
+use tokio::sync::mpsc;
 
+mod events;
 mod infra;
 mod panda_comms;
 mod repos;
@@ -50,7 +55,9 @@ async fn rocket() -> _ {
     println!("Config static_asset_path: {:?}", config.frontend_asset_path);
 
     // state
-    rocket = rocket.manage(P2PandaContainer::default());
+    let (channel_tx, channel_rx): (mpsc::Sender<SiteEvent>, mpsc::Receiver<SiteEvent>) = mpsc::channel(32);
+    rocket = rocket.manage(EventHandler::new(channel_rx));
+    rocket = rocket.manage(P2PandaContainer::new(channel_tx));
 
     // fairings
     rocket = rocket
