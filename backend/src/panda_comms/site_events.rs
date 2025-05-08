@@ -8,6 +8,7 @@ pub enum SiteEventPayload {
     SiteAnnounced(SiteAnnounced),
 }
 
+#[derive(Debug)]
 pub struct SiteEvent {
     payload: SiteEventPayload,
 }
