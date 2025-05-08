@@ -1,4 +1,4 @@
-use events::event_handler::EventHandler;
+use events::fairing::EventHandlerFairing;
 use infra::db::{run_migrations, MainDb};
 use infra::spa_server::SpaServer;
 use panda_comms::container::P2PandaContainer;
@@ -56,7 +56,6 @@ async fn rocket() -> _ {
 
     // state
     let (channel_tx, channel_rx): (mpsc::Sender<SiteEvent>, mpsc::Receiver<SiteEvent>) = mpsc::channel(32);
-    rocket = rocket.manage(EventHandler::new(channel_rx));
     rocket = rocket.manage(P2PandaContainer::new(channel_tx));
 
     // fairings
@@ -64,6 +63,7 @@ async fn rocket() -> _ {
         .attach(infra::cors::cors_fairing())
         .attach(MainDb::init())
         .attach(AdHoc::try_on_ignite("DB Migrations", run_migrations))
+        .attach(EventHandlerFairing::new(channel_rx))
         .attach(P2PandaCommsFairing::default());
 
     // frontend
