@@ -19,7 +19,7 @@ pub async fn handle_event(event: SiteEvent, pool: &sqlx::Pool<Sqlite>) {
                 name: site_announced.name.clone(),
             };
 
-            repo.create_site(pool, site).await.unwrap();
+            repo.upsert(pool, site).await.unwrap();
         }
     }
 }

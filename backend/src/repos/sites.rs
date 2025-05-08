@@ -24,13 +24,18 @@ impl SitesRepo {
         SitesRepo {}
     }
 
-    pub async fn create_site(&self, pool: &sqlx::Pool<Sqlite>, site: Site) -> Result<(), SitesError> {
+    pub async fn upsert(&self, pool: &sqlx::Pool<Sqlite>, site: Site) -> Result<(), SitesError> {
         let mut connection = pool.acquire().await.unwrap();
 
-        let _site = sqlx::query!("INSERT INTO sites (id, name) VALUES (?, ?)", site.id, site.name)
-            .execute(&mut *connection)
-            .await
-            .map_err(|_| SitesError::InternalServerError("Database error".to_string()))?;
+        let _site = sqlx::query!(
+            "INSERT INTO sites (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = ?",
+            site.id,
+            site.name,
+            site.name
+        )
+        .execute(&mut *connection)
+        .await
+        .map_err(|_| SitesError::InternalServerError("Database error".to_string()))?;
 
         Ok(())
     }
