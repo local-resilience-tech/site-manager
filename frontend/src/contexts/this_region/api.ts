@@ -1,7 +1,7 @@
 import { BaseApi } from "../shared"
 import { ApiResult } from "../shared/types"
 import { BootstrapPeer } from "../this_node"
-import { SiteDetails } from "../this_site"
+import { SiteDetails } from "../this_node"
 import { RegionDetails } from "./types"
 
 export default class ThisRegionApi extends BaseApi {

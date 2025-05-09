@@ -1,5 +1,5 @@
 import { Table } from "@chakra-ui/react"
-import { SiteDetails } from "../../this_site"
+import { SiteDetails } from "../../this_node"
 
 export default function SitesList({ sites }: { sites: SiteDetails[] }) {
   return (

@@ -2,7 +2,7 @@ import { Container, Heading, VStack } from "@chakra-ui/react"
 import { useContext, useEffect, useState } from "react"
 import { RegionContext } from "../provider_contexts"
 import SitesList from "../components/SitesList"
-import { SiteDetails } from "../../this_site"
+import { SiteDetails } from "../../this_node"
 import ThisRegionApi from "../api"
 import { Loading, useLoading } from "../../shared"
 

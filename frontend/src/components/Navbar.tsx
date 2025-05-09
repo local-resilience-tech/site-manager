@@ -37,9 +37,9 @@ export default function Navbar() {
                   Sites
                 </Button>
               </Link>
-              <Link to="/this_site">
+              <Link to="/this_node">
                 <Button colorPalette="blue" variant="ghost">
-                  This Site
+                  This Node
                 </Button>
               </Link>
             </Box>

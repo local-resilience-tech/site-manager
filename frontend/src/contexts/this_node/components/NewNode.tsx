@@ -3,41 +3,41 @@ import { useForm } from "react-hook-form"
 
 import { Field, Button, FormActions } from "../../../components"
 
-export interface NewSiteData {
+export interface NewNodeData {
   name: string
 }
 
-export type SubmitNewSiteFunc = (data: NewSiteData) => void
+export type SubmitNewNodeFunc = (data: NewNodeData) => void
 
-export default function NewSite({
-  onSubmitNewSite,
+export default function NewNode({
+  onSubmitNewNode,
 }: {
-  onSubmitNewSite: SubmitNewSiteFunc
+  onSubmitNewNode: SubmitNewNodeFunc
 }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<NewSiteData>()
+  } = useForm<NewNodeData>()
 
   return (
     <VStack alignItems={"stretch"} width="100%">
       <VStack alignItems={"flex-start"} textStyle={"xl"} gap={4}>
         <Text>
-          Welcome to your new Site - part of a local, resilient, internet.
+          Welcome to your new Node - part of a local, resilient, internet.
         </Text>
-        <Text>To get setup, you'll need to choose a site name.</Text>
+        <Text>To get setup, you'll need to choose a node name.</Text>
         <Text>
           Ideally this should be unique within your region, but don't worry,
           you'll have a chance to change it later.
         </Text>
       </VStack>
 
-      <form onSubmit={handleSubmit(onSubmitNewSite)}>
+      <form onSubmit={handleSubmit(onSubmitNewNode)}>
         <VStack alignItems={"flex-start"} pt={8}>
           <Field
-            label="Site Name"
-            helperText={`A name to identify your Site - use lowercase letters and no spaces`}
+            label="Node Name"
+            helperText={`A name to identify your Node - use lowercase letters and no spaces`}
             invalid={!!errors.name}
             errorText={errors.name?.message}
           >

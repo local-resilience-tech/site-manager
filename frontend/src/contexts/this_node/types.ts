@@ -1,4 +1,4 @@
-export type SiteDetails = {
+export type NodeDetails = {
   id: string
   name: string
 }
