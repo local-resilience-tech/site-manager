@@ -6,16 +6,16 @@ use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 
 use crate::infra::db::MainDb;
-use crate::panda_comms::site_events::SiteEvent;
+use crate::panda_comms::lores_events::LoResEvent;
 
 use super::handler_map::handle_event;
 
 pub struct EventHandlerFairing {
-    events_rx: Arc<Mutex<mpsc::Receiver<SiteEvent>>>,
+    events_rx: Arc<Mutex<mpsc::Receiver<LoResEvent>>>,
 }
 
 impl EventHandlerFairing {
-    pub fn new(events_rx: mpsc::Receiver<SiteEvent>) -> Self {
+    pub fn new(events_rx: mpsc::Receiver<LoResEvent>) -> Self {
         EventHandlerFairing {
             events_rx: Arc::new(Mutex::new(events_rx)),
         }

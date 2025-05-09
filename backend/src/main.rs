@@ -3,7 +3,7 @@ use infra::db::{run_migrations, MainDb};
 use infra::spa_server::SpaServer;
 use panda_comms::container::P2PandaContainer;
 use panda_comms::fairing::P2PandaCommsFairing;
-use panda_comms::site_events::SiteEvent;
+use panda_comms::lores_events::LoResEvent;
 use rocket::fairing::AdHoc;
 use rocket::fs::{FileServer, Options};
 use rocket::response::Redirect;
@@ -55,7 +55,7 @@ async fn rocket() -> _ {
     println!("Config static_asset_path: {:?}", config.frontend_asset_path);
 
     // state
-    let (channel_tx, channel_rx): (mpsc::Sender<SiteEvent>, mpsc::Receiver<SiteEvent>) = mpsc::channel(32);
+    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) = mpsc::channel(32);
     rocket = rocket.manage(P2PandaContainer::new(channel_tx));
 
     // fairings

@@ -13,7 +13,7 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
-use super::site_events::{SiteAnnounced, SiteEvent, SiteEventHeader, SiteEventPayload};
+use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload, NodeAnnounced};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "site_management";
@@ -22,7 +22,7 @@ const LOG_ID: &str = "site_management";
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
     node_api: Arc<Mutex<Option<NodeApi<NodeExtensions>>>>,
-    events_tx: mpsc::Sender<SiteEvent>,
+    events_tx: mpsc::Sender<LoResEvent>,
 }
 
 #[derive(Default, Clone)]
@@ -33,7 +33,7 @@ pub struct NodeParams {
 }
 
 impl P2PandaContainer {
-    pub fn new(events_tx: mpsc::Sender<SiteEvent>) -> Self {
+    pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
         let params = Arc::new(Mutex::new(NodeParams::default()));
         let node_api = Arc::new(Mutex::new(None));
 
@@ -184,8 +184,8 @@ impl P2PandaContainer {
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let site_announced = SiteAnnounced { name: site_name.clone() };
-        let event_payload = SiteEventPayload::SiteAnnounced(site_announced);
+        let site_announced = NodeAnnounced { name: site_name.clone() };
+        let event_payload = LoResEventPayload::NodeAnnounced(site_announced);
 
         let payload = serde_json::to_vec(&event_payload)?;
 
@@ -272,7 +272,7 @@ impl P2PandaContainer {
 
                 match data {
                     EventData::Application(payload) => {
-                        let site_event: Result<SiteEventPayload, _> = serde_json::from_slice(&payload);
+                        let site_event: Result<LoResEventPayload, _> = serde_json::from_slice(&payload);
                         match site_event {
                             Ok(site_event_payload) => {
                                 println!("  Parsed SiteEvent: {:?}", site_event_payload);
@@ -280,10 +280,10 @@ impl P2PandaContainer {
                                 let header = event.header.unwrap();
 
                                 // emit to the event handler
-                                let site_event_header = SiteEventHeader {
+                                let site_event_header = LoResEventHeader {
                                     author_node_id: header.public_key.to_hex(),
                                 };
-                                let event = SiteEvent::new(site_event_header, site_event_payload);
+                                let event = LoResEvent::new(site_event_header, site_event_payload);
                                 let send_result = events_tx.send(event).await;
 
                                 if let Err(err) = send_result {
