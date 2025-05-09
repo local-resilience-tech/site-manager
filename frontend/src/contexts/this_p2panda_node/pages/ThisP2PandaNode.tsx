@@ -1,19 +1,19 @@
 import { VStack, Text, Table, Box } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
-import ThisNodeApi from "../api"
-import { NodeDetails } from "../types"
+import ThisP2PandaNodeApi from "../api"
+import { P2PandaNodeDetails } from "../types"
 import { Button } from "../../../components"
 
-const api = new ThisNodeApi()
+const api = new ThisP2PandaNodeApi()
 
-const getNode = async (): Promise<NodeDetails | null> => {
+const getNode = async (): Promise<P2PandaNodeDetails | null> => {
   const result = await api.showNode()
   if ("Ok" in result) return result.Ok
   return null
 }
 
-export default function ThisNode() {
-  const [node, setNode] = useState<NodeDetails | null>(null)
+export default function ThisP2PandaNode() {
+  const [node, setNode] = useState<P2PandaNodeDetails | null>(null)
 
   const fetchNode = async () => {
     const node = await getNode()

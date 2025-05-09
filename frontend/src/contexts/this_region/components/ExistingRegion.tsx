@@ -3,7 +3,7 @@ import {
   BootstrapNode,
   BootstrapNodeData,
   BootstrapPeer,
-} from "../../this_node"
+} from "../../this_p2panda_node"
 import { useState } from "react"
 import ThisRegionApi from "../api"
 

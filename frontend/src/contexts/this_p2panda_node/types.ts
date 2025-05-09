@@ -6,7 +6,7 @@ export type NodeAddr = {
   }
 }
 
-export type NodeDetails = {
+export type P2PandaNodeDetails = {
   panda_node_id: string
   iroh_node_addr: NodeAddr
   peers: NodeAddr[]

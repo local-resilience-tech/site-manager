@@ -4,7 +4,7 @@ import { ChakraProvider } from "@chakra-ui/react"
 import { ColorModeProvider } from "./components/ui/color-mode"
 import { themeSystem } from "./theme"
 import { EnsureSite } from "./contexts/this_site"
-import { ThisNode } from "./contexts/this_node"
+import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
 import { EnsureRegion, Sites } from "./contexts/this_region"
 
 const router = createBrowserRouter(
@@ -21,7 +21,7 @@ const router = createBrowserRouter(
             { path: "this_site", element: <EnsureSite /> },
           ],
         },
-        { path: "node", element: <ThisNode /> },
+        { path: "node", element: <ThisP2PandaNode /> },
       ],
     },
   ],
