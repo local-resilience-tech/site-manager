@@ -43,7 +43,7 @@ To access it in the browser, access the front end at the port that vite uses by 
 To run the app locally in release mode you can build it and run it using docker.
 
 ```
-sudo docker build -t dev/site-manager:latest . && sudo docker run -p 8000:80 dev/site-manager:latest
+sudo docker build -t dev/lores-node:latest . && sudo docker run -p 8000:80 dev/lores-node:latest
 ```
 
 In release mode, the front end is not rendered, it's just built and placed in the docker container at the dir `/app/frontend`. The backend rust app builds an executable in `/app/backend` which is the command run by docker.
@@ -76,11 +76,11 @@ This app is designed to be deployed on Raspberry Pis used in a docker swarm.
 
 To deploy it, fetch the latest compose file using:
 
-`curl https://raw.githubusercontent.com/merri-bek-tech/site-manager/refs/heads/main/compose.yml > site-manager.yml`
+`curl https://raw.githubusercontent.com/local-resilience-tech/lores-node/refs/heads/main/compose.yml > lores-node.yml`
 
 The, providing you have a docker swarm running, use:
 
-`docker stack deploy -c ./site-manager.yml site-manager`
+`docker stack deploy -c ./lores-node.yml lores-node`
 
 The app should then be running on post 8000 of your pi. We recommend using [swarmpit](https://swarmpit.io/) to monitor your swarm.
 
