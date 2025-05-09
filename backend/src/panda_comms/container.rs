@@ -16,8 +16,8 @@ use tokio::sync::{broadcast, mpsc, Mutex};
 use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload, NodeAnnounced};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
-const TOPIC_NAME: &str = "site_management";
-const LOG_ID: &str = "site_management";
+const TOPIC_NAME: &str = "lores_mesh";
+const LOG_ID: &str = "lores_mesh";
 
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
@@ -140,7 +140,7 @@ impl P2PandaContainer {
             .add_topic_log(&public_key, TOPIC_NAME, LOG_ID)
             .await?;
 
-        // subscribe to site management topic
+        // subscribe to main topic
         node_api.subscribe_persisted(TOPIC_NAME).await?;
 
         // put the node in the container
@@ -178,14 +178,14 @@ impl P2PandaContainer {
         *node_api_lock = maybe_node_api;
     }
 
-    pub async fn announce_site(&self, site_name: String) -> Result<()> {
+    pub async fn announce_node(&self, node_name: String) -> Result<()> {
         let mut node_api = self.node_api.lock().await;
         let node_api = node_api
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let site_announced = NodeAnnounced { name: site_name.clone() };
-        let event_payload = LoResEventPayload::NodeAnnounced(site_announced);
+        let node_announced = NodeAnnounced { name: node_name.clone() };
+        let event_payload = LoResEventPayload::NodeAnnounced(node_announced);
 
         let payload = serde_json::to_vec(&event_payload)?;
 
@@ -198,7 +198,7 @@ impl P2PandaContainer {
             .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), Some(extensions))
             .await?;
 
-        println!("Announcing site: {}", site_name);
+        println!("Announcing node: {}", node_name);
 
         Ok(())
     }
@@ -272,25 +272,25 @@ impl P2PandaContainer {
 
                 match data {
                     EventData::Application(payload) => {
-                        let site_event: Result<LoResEventPayload, _> = serde_json::from_slice(&payload);
-                        match site_event {
-                            Ok(site_event_payload) => {
-                                println!("  Parsed SiteEvent: {:?}", site_event_payload);
+                        let lores_event: Result<LoResEventPayload, _> = serde_json::from_slice(&payload);
+                        match lores_event {
+                            Ok(lores_event_payload) => {
+                                println!("  Parsed LoResEvent: {:?}", lores_event_payload);
 
                                 let header = event.header.unwrap();
 
                                 // emit to the event handler
-                                let site_event_header = LoResEventHeader {
+                                let lores_event_header = LoResEventHeader {
                                     author_node_id: header.public_key.to_hex(),
                                 };
-                                let event = LoResEvent::new(site_event_header, site_event_payload);
+                                let event = LoResEvent::new(lores_event_header, lores_event_payload);
                                 let send_result = events_tx.send(event).await;
 
                                 if let Err(err) = send_result {
                                     println!("  Failed to send event: {:?}", err);
                                 }
                             }
-                            Err(err) => println!("  Failed to parse Site Event: {:?}", err),
+                            Err(err) => println!("  Failed to parse LoResEvent: {:?}", err),
                         }
                     }
                     EventData::Ephemeral(payload) => {

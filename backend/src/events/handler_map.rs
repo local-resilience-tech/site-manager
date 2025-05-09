@@ -9,17 +9,17 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
     let header = event.header;
 
     match event.payload {
-        LoResEventPayload::NodeAnnounced(site_announced) => {
+        LoResEventPayload::NodeAnnounced(payload) => {
             let repo = NodesRepo::init();
 
-            println!("Site announced: {:?}", site_announced);
+            println!("Node announced: {:?}", payload);
 
-            let site: Node = Node {
+            let node: Node = Node {
                 id: header.author_node_id.clone(),
-                name: site_announced.name.clone(),
+                name: payload.name.clone(),
             };
 
-            repo.upsert(pool, site).await.unwrap();
+            repo.upsert(pool, node).await.unwrap();
         }
     }
 }

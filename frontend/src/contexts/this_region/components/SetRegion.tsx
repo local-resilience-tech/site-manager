@@ -14,12 +14,12 @@ export default function SetRegion({
         Welcome to LoRes Mesh
       </Heading>
       <Text>
-        In order to setup this Site, we need to connect you to a region.
+        In order to setup this Node, we need to connect you to a region.
       </Text>
       <Text>
-        A Region is a cluster of Sites that are in regular communication, and
+        A Region is a cluster of Nodes that are in regular communication, and
         provide services to users that are redundantly available at many or all
-        of the Sites. This means that a region is generally a geographic area
+        of the Nodes. This means that a region is generally a geographic area
         that makes sense to humans, such as your neighbourhood, town, river
         catchment, etc.
       </Text>

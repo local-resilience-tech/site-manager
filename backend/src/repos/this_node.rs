@@ -11,7 +11,7 @@ pub enum ThisNodeRepoError {
     #[response(status = 500)]
     InternalServerError(String),
 
-    #[error("Site not found")]
+    #[error("Node not found")]
     #[response(status = 404)]
     NotFound(String),
 }
@@ -22,7 +22,7 @@ impl ThisNodeRepo {
     }
 
     pub async fn find(&self, db: &mut Connection<MainDb>) -> Result<Node, ThisNodeRepoError> {
-        let site = sqlx::query_as!(
+        let node = sqlx::query_as!(
             Node,
             "
             SELECT nodes.id as id, nodes.name as name
@@ -35,10 +35,10 @@ impl ThisNodeRepo {
         .fetch_one(&mut ***db)
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => ThisNodeRepoError::NotFound("Site not found".to_string()),
+            sqlx::Error::RowNotFound => ThisNodeRepoError::NotFound("Node not found".to_string()),
             _ => ThisNodeRepoError::InternalServerError("Database error".to_string()),
         })?;
 
-        return Ok(site);
+        return Ok(node);
     }
 }

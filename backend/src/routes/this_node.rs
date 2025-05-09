@@ -18,7 +18,7 @@ struct CreateNodeDetails {
 #[post("/create", data = "<data>")]
 async fn create(data: Json<CreateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
     panda_container
-        .announce_site(data.name.clone())
+        .announce_node(data.name.clone())
         .await
         .map_err(|e| {
             println!("got error: {}", e);

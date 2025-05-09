@@ -10,11 +10,11 @@ pub enum NodesError {
     #[error("Internal server error: {0}")]
     #[response(status = 500)]
     InternalServerError(String),
-    // #[error("Cannot create site")]
+    // #[error("Cannot create node")]
     // #[response(status = 409)]
     // CannotCreate(String),
 
-    // #[error("Site not found")]
+    // #[error("Node not found")]
     // #[response(status = 404)]
     // NotFound(String),
 }
@@ -24,14 +24,14 @@ impl NodesRepo {
         NodesRepo {}
     }
 
-    pub async fn upsert(&self, pool: &sqlx::Pool<Sqlite>, site: Node) -> Result<(), NodesError> {
+    pub async fn upsert(&self, pool: &sqlx::Pool<Sqlite>, node: Node) -> Result<(), NodesError> {
         let mut connection = pool.acquire().await.unwrap();
 
-        let _site = sqlx::query!(
+        let _node = sqlx::query!(
             "INSERT INTO nodes (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = ?",
-            site.id,
-            site.name,
-            site.name
+            node.id,
+            node.name,
+            node.name
         )
         .execute(&mut *connection)
         .await
