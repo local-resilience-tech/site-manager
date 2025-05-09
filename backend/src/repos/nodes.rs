@@ -1,7 +1,7 @@
 use sqlx::Sqlite;
 use thiserror::Error;
 
-use super::entities::Site;
+use super::entities::Node;
 
 pub struct NodesRepo {}
 
@@ -24,7 +24,7 @@ impl NodesRepo {
         NodesRepo {}
     }
 
-    pub async fn upsert(&self, pool: &sqlx::Pool<Sqlite>, site: Site) -> Result<(), NodesError> {
+    pub async fn upsert(&self, pool: &sqlx::Pool<Sqlite>, site: Node) -> Result<(), NodesError> {
         let mut connection = pool.acquire().await.unwrap();
 
         let _site = sqlx::query!(

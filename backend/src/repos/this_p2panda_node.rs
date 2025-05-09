@@ -11,10 +11,10 @@ use rocket_db_pools::Connection;
 use sqlx;
 use thiserror::Error;
 
-pub struct ThisPandaNodeRepo {}
+pub struct ThisP2PandaNodeRepo {}
 
 #[derive(Debug, Error, Responder)]
-pub enum ThisNodeError {
+pub enum ThisP2PandaNodeRepoError {
     #[error("Internal server error: {0}")]
     #[response(status = 500)]
     InternalServerError(String),
@@ -25,12 +25,12 @@ pub struct SimplifiedNodeAddress {
     pub node_id: String,
 }
 
-impl ThisPandaNodeRepo {
+impl ThisP2PandaNodeRepo {
     pub fn init() -> Self {
-        ThisPandaNodeRepo {}
+        ThisP2PandaNodeRepo {}
     }
 
-    pub async fn get_network_name(&self, db: &MainDb) -> Result<Option<String>, ThisNodeError> {
+    pub async fn get_network_name(&self, db: &MainDb) -> Result<Option<String>, ThisP2PandaNodeRepoError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 
         let result = sqlx::query!(
@@ -44,7 +44,7 @@ impl ThisPandaNodeRepo {
         )
         .fetch_optional(&mut *connection)
         .await
-        .map_err(|_| ThisNodeError::InternalServerError("Database error".to_string()))?;
+        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
 
         match result {
             None => return Ok(None),
@@ -54,7 +54,7 @@ impl ThisPandaNodeRepo {
 
     // TODO: I don't know how to handle the DB connection in these two different ways, this is a
     // temporary solution
-    pub async fn get_network_name_conn(&self, connection: &mut Connection<MainDb>) -> Result<Option<String>, ThisNodeError> {
+    pub async fn get_network_name_conn(&self, connection: &mut Connection<MainDb>) -> Result<Option<String>, ThisP2PandaNodeRepoError> {
         let result = sqlx::query!(
             "
             SELECT network_name
@@ -66,7 +66,7 @@ impl ThisPandaNodeRepo {
         )
         .fetch_optional(&mut ***connection)
         .await
-        .map_err(|_| ThisNodeError::InternalServerError("Database error".to_string()))?;
+        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
 
         match result {
             None => return Ok(None),
@@ -74,7 +74,7 @@ impl ThisPandaNodeRepo {
         }
     }
 
-    pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<SimplifiedNodeAddress>, ThisNodeError> {
+    pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<SimplifiedNodeAddress>, ThisP2PandaNodeRepoError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 
         let result = sqlx::query!(
@@ -88,7 +88,7 @@ impl ThisPandaNodeRepo {
         )
         .fetch_optional(&mut *connection)
         .await
-        .map_err(|_| ThisNodeError::InternalServerError("Database error".to_string()))?;
+        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
 
         match result {
             None => return Ok(None),
@@ -104,7 +104,7 @@ impl ThisPandaNodeRepo {
         db: &mut Connection<MainDb>,
         network_name: String,
         peer_address: Option<SimplifiedNodeAddress>,
-    ) -> Result<(), ThisNodeError> {
+    ) -> Result<(), ThisP2PandaNodeRepoError> {
         let bootstrap_node_id = peer_address
             .as_ref()
             .map(|peer| peer.node_id.clone());
@@ -125,7 +125,7 @@ impl ThisPandaNodeRepo {
         return Ok(());
     }
 
-    pub async fn get_or_create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisNodeError> {
+    pub async fn get_or_create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisP2PandaNodeRepoError> {
         let private_key = self.get_private_key(db).await?;
 
         match private_key {
@@ -139,21 +139,21 @@ impl ThisPandaNodeRepo {
         }
     }
 
-    async fn get_private_key(&self, db: &MainDb) -> Result<Option<PrivateKey>, ThisNodeError> {
+    async fn get_private_key(&self, db: &MainDb) -> Result<Option<PrivateKey>, ThisP2PandaNodeRepoError> {
         let private_key_hex: Option<String> = self.get_private_key_hex(db).await?;
 
         match private_key_hex {
             None => return Ok(None),
             Some(private_key_hex) => {
                 let private_key = Self::build_private_key_from_hex(private_key_hex)
-                    .ok_or(ThisNodeError::InternalServerError("Failed to build private key".to_string()))?;
+                    .ok_or(ThisP2PandaNodeRepoError::InternalServerError("Failed to build private key".to_string()))?;
 
                 return Ok(Some(private_key));
             }
         }
     }
 
-    async fn create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisNodeError> {
+    async fn create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisP2PandaNodeRepoError> {
         let new_private_key = PrivateKey::new();
 
         self.set_private_key_hex(db, new_private_key.to_hex())
@@ -164,7 +164,7 @@ impl ThisPandaNodeRepo {
         return Ok(new_private_key);
     }
 
-    async fn set_private_key_hex(&self, db: &MainDb, private_key_hex: String) -> Result<(), ThisNodeError> {
+    async fn set_private_key_hex(&self, db: &MainDb, private_key_hex: String) -> Result<(), ThisP2PandaNodeRepoError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 
         let _region = sqlx::query!(
@@ -182,7 +182,7 @@ impl ThisPandaNodeRepo {
         return Ok(());
     }
 
-    async fn get_private_key_hex(&self, db: &MainDb) -> Result<Option<String>, ThisNodeError> {
+    async fn get_private_key_hex(&self, db: &MainDb) -> Result<Option<String>, ThisP2PandaNodeRepoError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 
         let result = sqlx::query_as!(
@@ -197,7 +197,7 @@ impl ThisPandaNodeRepo {
         )
         .fetch_one(&mut *connection)
         .await
-        .map_err(|_| ThisNodeError::InternalServerError("Database error".to_string()))?;
+        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
 
         return Ok(result.private_key_hex);
     }

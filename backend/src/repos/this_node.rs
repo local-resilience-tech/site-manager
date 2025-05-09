@@ -1,4 +1,4 @@
-use super::entities::Site;
+use super::entities::Node;
 use crate::{infra::db::MainDb, repos::helpers::NODE_CONFIG_ID};
 use rocket_db_pools::Connection;
 use thiserror::Error;
@@ -21,9 +21,9 @@ impl ThisNodeRepo {
         ThisNodeRepo {}
     }
 
-    pub async fn get_site(&self, db: &mut Connection<MainDb>) -> Result<Site, ThisNodeRepoError> {
+    pub async fn find(&self, db: &mut Connection<MainDb>) -> Result<Node, ThisNodeRepoError> {
         let site = sqlx::query_as!(
-            Site,
+            Node,
             "
             SELECT nodes.id as id, nodes.name as name
             FROM nodes

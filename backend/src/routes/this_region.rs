@@ -5,14 +5,14 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::{build_public_key_from_hex, P2PandaContainer};
-use crate::repos::entities::{Region, Site};
-use crate::repos::this_panda_node::{SimplifiedNodeAddress, ThisNodeError, ThisPandaNodeRepo};
+use crate::repos::entities::{Node, Region};
+use crate::repos::this_p2panda_node::{SimplifiedNodeAddress, ThisP2PandaNodeRepo, ThisP2PandaNodeRepoError};
 
-use super::this_node::BootstrapNodeData;
+use super::this_p2panda_node::BootstrapNodeData;
 
 #[get("/", format = "json")]
-async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisNodeError> {
-    let repo = ThisPandaNodeRepo::init();
+async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisP2PandaNodeRepoError> {
+    let repo = ThisP2PandaNodeRepo::init();
 
     repo.get_network_name_conn(&mut db)
         .await
@@ -29,14 +29,14 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisNo
 }
 
 #[get("/sites", format = "json")]
-async fn sites() -> Result<Json<Vec<Site>>, ThisNodeError> {
+async fn sites() -> Result<Json<Vec<Node>>, ThisP2PandaNodeRepoError> {
     // create dummy data
     let sites = vec![
-        Site {
+        Node {
             id: "1".to_string(),
             name: "Site 1".to_string(),
         },
-        Site {
+        Node {
             id: "2".to_string(),
             name: "Site 2".to_string(),
         },
@@ -50,8 +50,8 @@ async fn bootstrap(
     mut db: Connection<MainDb>,
     data: Json<BootstrapNodeData>,
     panda_container: &State<P2PandaContainer>,
-) -> Result<Json<()>, ThisNodeError> {
-    let repo = ThisPandaNodeRepo::init();
+) -> Result<Json<()>, ThisP2PandaNodeRepoError> {
+    let repo = ThisP2PandaNodeRepo::init();
 
     let bootstrap_peer = &data.bootstrap_peer;
 

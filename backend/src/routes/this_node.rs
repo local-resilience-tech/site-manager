@@ -1,73 +1,43 @@
-use iroh::NodeAddr;
-use p2panda_net::NodeAddress;
 use rocket::serde::json::Json;
-use rocket::serde::{Deserialize, Serialize};
-use rocket::{Route, State};
+use rocket::serde::Deserialize;
+use rocket::Route;
+use rocket::{post, State};
+use rocket_db_pools::Connection;
 
+use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
-use crate::repos::this_panda_node::ThisNodeError;
+use crate::repos::entities::Node;
+use crate::repos::this_node::{ThisNodeRepo, ThisNodeRepoError};
 
-#[derive(sqlx::FromRow, Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct NodeDetails {
-    pub panda_node_id: String,
-    pub iroh_node_addr: NodeAddr,
-    pub peers: Vec<NodeAddress>,
+struct CreateNodeDetails {
+    name: String,
+}
+
+#[post("/create", data = "<data>")]
+async fn create(data: Json<CreateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
+    panda_container
+        .announce_site(data.name.clone())
+        .await
+        .map_err(|e| {
+            println!("got error: {}", e);
+            ThisNodeRepoError::InternalServerError(e.to_string())
+        })?;
+
+    return Ok(Json(Node {
+        id: "1".to_string(),
+        name: data.name.clone(),
+    }));
 }
 
 #[get("/", format = "json")]
-async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDetails>, ThisNodeError> {
-    let public_key: String = panda_container
-        .get_public_key()
-        .await
-        .unwrap()
-        .to_string();
-    println!("public key: {}", public_key);
+async fn show(mut db: Connection<MainDb>) -> Result<Json<Node>, ThisNodeRepoError> {
+    let repo = ThisNodeRepo::init();
 
-    let node_addr = panda_container.get_node_addr().await;
-    println!("node addr: {:?}", node_addr);
-
-    let mut peers = panda_container.known_peers().await;
-
-    if peers.is_err() {
-        println!("Failed to get known peers {:?}", peers);
-        peers = Ok(vec![]);
-    } else {
-        println!("peers: {:?}", peers);
-    }
-
-    let node_details = NodeDetails {
-        panda_node_id: public_key,
-        iroh_node_addr: node_addr,
-        peers: peers.unwrap(),
-    };
-
-    Ok(Json(node_details))
-}
-
-#[post("/restart", format = "json")]
-async fn restart(panda_container: &State<P2PandaContainer>) -> Result<Json<String>, ThisNodeError> {
-    panda_container.restart().await.map_err(|e| {
-        println!("got error: {}", e);
-        ThisNodeError::InternalServerError(e.to_string())
-    })?;
-
-    Ok(Json("Restarted".to_string()))
-}
-
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-pub struct BootstrapNodePeer {
-    pub node_id: String,
-}
-
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-pub struct BootstrapNodeData {
-    pub network_name: String,
-    pub bootstrap_peer: Option<BootstrapNodePeer>,
+    repo.find(&mut db).await.map(|node| Json(node))
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![show, restart]
+    routes![create, show]
 }

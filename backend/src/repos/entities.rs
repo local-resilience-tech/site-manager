@@ -3,14 +3,14 @@ use sqlx;
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct Site {
+pub struct Node {
     pub id: String,
     pub name: String,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub struct SiteConfig {
+pub struct NodeConfig {
     pub id: String,
     pub this_node_id: String,
     pub name: String,
