@@ -5,7 +5,7 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::{Route, State};
 
 use crate::panda_comms::container::P2PandaContainer;
-use crate::repos::this_node::ThisNodeError;
+use crate::repos::this_panda_node::ThisNodeError;
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]

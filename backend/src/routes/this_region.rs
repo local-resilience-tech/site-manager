@@ -6,13 +6,13 @@ use rocket_db_pools::Connection;
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::{build_public_key_from_hex, P2PandaContainer};
 use crate::repos::entities::{Region, Site};
-use crate::repos::this_node::{SimplifiedNodeAddress, ThisNodeError, ThisNodeRepo};
+use crate::repos::this_panda_node::{SimplifiedNodeAddress, ThisNodeError, ThisPandaNodeRepo};
 
 use super::this_node::BootstrapNodeData;
 
 #[get("/", format = "json")]
 async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisNodeError> {
-    let repo = ThisNodeRepo::init();
+    let repo = ThisPandaNodeRepo::init();
 
     repo.get_network_name_conn(&mut db)
         .await
@@ -51,7 +51,7 @@ async fn bootstrap(
     data: Json<BootstrapNodeData>,
     panda_container: &State<P2PandaContainer>,
 ) -> Result<Json<()>, ThisNodeError> {
-    let repo = ThisNodeRepo::init();
+    let repo = ThisPandaNodeRepo::init();
 
     let bootstrap_peer = &data.bootstrap_peer;
 

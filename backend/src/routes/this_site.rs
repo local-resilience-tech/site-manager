@@ -7,7 +7,7 @@ use rocket_db_pools::Connection;
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
 use crate::repos::entities::Site;
-use crate::repos::this_site::{ThisSiteError, ThisSiteRepo};
+use crate::repos::this_node::{ThisNodeRepo, ThisNodeRepoError};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -16,19 +16,13 @@ struct CreateSiteDetails {
 }
 
 #[post("/create", data = "<data>")]
-async fn create(data: Json<CreateSiteDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Site>, ThisSiteError> {
-    // let repo = ThisSiteRepo::init();
-
-    // repo.create_site(&mut db, data.name.clone())
-    //     .await
-    //     .map(|site| Json(site))
-
+async fn create(data: Json<CreateSiteDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Site>, ThisNodeRepoError> {
     panda_container
         .announce_site(data.name.clone())
         .await
         .map_err(|e| {
             println!("got error: {}", e);
-            ThisSiteError::InternalServerError(e.to_string())
+            ThisNodeRepoError::InternalServerError(e.to_string())
         })?;
 
     return Ok(Json(Site {
@@ -38,8 +32,8 @@ async fn create(data: Json<CreateSiteDetails>, panda_container: &State<P2PandaCo
 }
 
 #[get("/", format = "json")]
-async fn show(mut db: Connection<MainDb>) -> Result<Json<Site>, ThisSiteError> {
-    let repo = ThisSiteRepo::init();
+async fn show(mut db: Connection<MainDb>) -> Result<Json<Site>, ThisNodeRepoError> {
+    let repo = ThisNodeRepo::init();
 
     repo.get_site(&mut db)
         .await
