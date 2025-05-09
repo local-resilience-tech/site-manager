@@ -1,6 +1,11 @@
-# Site Manager
+# LoRes Node
 
-Manage your [Site](https://jade.hopepunk.me/posts/sites-the-main-component-of-merri-bek-tech/) for resilient, local web hosting. Developed by [Merri-bek Tech](https://www.merri-bek.tech/), but useful for all similar organisations.
+Manage a [Node](https://jade.hopepunk.me/posts/sites-the-main-component-of-merri-bek-tech/)
+in a LoRes Mesh.
+
+LoRes Mesh allows you to run a network of low powered, resilient local web hosts that work with the internet, but are not dependent on it.
+
+Developed by [Merri-bek Tech](https://www.merri-bek.tech/), but useful for all similar organisations.
 
 # Development
 
