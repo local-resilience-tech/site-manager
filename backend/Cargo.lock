@@ -2785,6 +2785,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "lores-node"
+version = "0.4.7"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "ciborium",
+ "dotenvy",
+ "env_logger",
+ "experimental-node",
+ "futures-util",
+ "hex",
+ "iroh",
+ "iroh-io",
+ "log",
+ "p2panda-blobs",
+ "p2panda-core",
+ "p2panda-discovery",
+ "p2panda-net",
+ "p2panda-store",
+ "p2panda-stream",
+ "p2panda-sync",
+ "rand 0.8.5",
+ "rocket",
+ "rocket_cors",
+ "rocket_db_pools",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "sqlx-cli",
+ "tempfile",
+ "thiserror 2.0.12",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "lru"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4887,44 +4925,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dee851d0e5e7af3721faea1843e8015e820a234f81fda3dea9247e15bac9a86a"
 dependencies = [
  "bitflags 2.9.0",
-]
-
-[[package]]
-name = "site-manager"
-version = "0.4.7"
-dependencies = [
- "anyhow",
- "async-trait",
- "ciborium",
- "dotenvy",
- "env_logger",
- "experimental-node",
- "futures-util",
- "hex",
- "iroh",
- "iroh-io",
- "log",
- "p2panda-blobs",
- "p2panda-core",
- "p2panda-discovery",
- "p2panda-net",
- "p2panda-store",
- "p2panda-stream",
- "p2panda-sync",
- "rand 0.8.5",
- "rocket",
- "rocket_cors",
- "rocket_db_pools",
- "serde",
- "serde_json",
- "sqlx",
- "sqlx-cli",
- "tempfile",
- "thiserror 2.0.12",
- "tokio-stream",
- "tokio-util",
- "tracing",
- "uuid",
 ]
 
 [[package]]

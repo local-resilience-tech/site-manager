@@ -1,14 +1,14 @@
 {
-  "name": "site-manager-frontend",
+  "name": "lores-node-frontend",
   "private": true,
   "version": "0.4.7",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/merri-bek-tech/site-manager.git"
+    "url": "git+https://github.com/merri-bek-tech/lores-node.git"
   },
   "licence": "GPL-3.0",
-  "homepage": "https://github.com/merri-bek-tech/site-manager",
+  "homepage": "https://github.com/merri-bek-tech/lores-node",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
