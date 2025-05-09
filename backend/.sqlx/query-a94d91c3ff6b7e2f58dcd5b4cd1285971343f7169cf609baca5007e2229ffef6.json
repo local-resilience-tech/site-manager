@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE node_configs SET this_node_id = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "a94d91c3ff6b7e2f58dcd5b4cd1285971343f7169cf609baca5007e2229ffef6"
+}

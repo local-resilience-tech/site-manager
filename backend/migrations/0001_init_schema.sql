@@ -1,5 +1,5 @@
 -- Add migration script here
-CREATE TABLE sites (
+CREATE TABLE nodes (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     name VARCHAR(50) NOT NULL
 );
@@ -11,9 +11,9 @@ CREATE TABLE network_configs (
     bootstrap_node_ip4 VARCHAR(15)
 );
 
-CREATE TABLE site_configs (
+CREATE TABLE node_configs (
     id INT PRIMARY KEY NOT NULL,
-    this_site_id VARCHAR(36),
+    this_node_id VARCHAR(36),
     private_key_hex VARCHAR(64),
-    FOREIGN KEY (this_site_id) REFERENCES sites(id)
+    FOREIGN KEY (this_node_id) REFERENCES nodes(id)
 );

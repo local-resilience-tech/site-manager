@@ -1,5 +1,5 @@
 use super::entities::Site;
-use crate::{infra::db::MainDb, repos::helpers::SITE_CONFIG_ID};
+use crate::{infra::db::MainDb, repos::helpers::NODE_CONFIG_ID};
 use rocket_db_pools::Connection;
 use thiserror::Error;
 use uuid::Uuid;
@@ -30,12 +30,12 @@ impl ThisSiteRepo {
         let site = sqlx::query_as!(
             Site,
             "
-            SELECT sites.id as id, sites.name as name
-            FROM sites
-            INNER JOIN site_configs ON site_configs.this_site_id = sites.id
-            WHERE site_configs.id = ? LIMIT 1
+            SELECT nodes.id as id, nodes.name as name
+            FROM nodes
+            INNER JOIN node_configs ON node_configs.this_node_id = nodes.id
+            WHERE node_configs.id = ? LIMIT 1
             ",
-            SITE_CONFIG_ID
+            NODE_CONFIG_ID
         )
         .fetch_one(&mut ***db)
         .await
@@ -60,12 +60,12 @@ impl ThisSiteRepo {
 
         let site_id = Uuid::new_v4().to_string();
 
-        let _site = sqlx::query!("INSERT INTO sites (id, name) VALUES (?, ?)", site_id, name)
+        let _site = sqlx::query!("INSERT INTO nodes (id, name) VALUES (?, ?)", site_id, name)
             .execute(&mut ***db)
             .await
             .map_err(|_| ThisSiteError::InternalServerError("Database error".to_string()))?;
 
-        let _site_config = sqlx::query!("UPDATE site_configs SET this_site_id = ? WHERE id = ?", site_id, SITE_CONFIG_ID)
+        let _site_config = sqlx::query!("UPDATE node_configs SET this_node_id = ? WHERE id = ?", site_id, NODE_CONFIG_ID)
             .execute(&mut ***db)
             .await
             .map_err(|_| ThisSiteError::InternalServerError("Database error".to_string()))?;

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT private_key_hex\n            FROM site_configs\n            WHERE site_configs.id = ?\n            LIMIT 1\n            ",
+  "query": "\n            SELECT private_key_hex\n            FROM node_configs\n            WHERE node_configs.id = ?\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       true
     ]
   },
-  "hash": "1877bcbfcc63366b43d455012afdb181f89f9f54a7ba2051f3987eabc274738c"
+  "hash": "17a9245be5e8e8b94b86d2bada32ac565a16b0d107c7e4b7cf5d49a24979a872"
 }

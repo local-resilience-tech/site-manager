@@ -2,7 +2,7 @@ use sqlx::Sqlite;
 
 use crate::{
     panda_comms::site_events::{SiteEvent, SiteEventPayload},
-    repos::{entities::Site, sites::SitesRepo},
+    repos::{entities::Site, nodes::NodesRepo},
 };
 
 pub async fn handle_event(event: SiteEvent, pool: &sqlx::Pool<Sqlite>) {
@@ -10,7 +10,7 @@ pub async fn handle_event(event: SiteEvent, pool: &sqlx::Pool<Sqlite>) {
 
     match event.payload {
         SiteEventPayload::SiteAnnounced(site_announced) => {
-            let repo = SitesRepo::init();
+            let repo = NodesRepo::init();
 
             println!("Site announced: {:?}", site_announced);
 

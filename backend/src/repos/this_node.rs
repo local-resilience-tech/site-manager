@@ -2,7 +2,7 @@ use crate::{
     infra::db::MainDb,
     repos::{
         entities::PrivateKeyRow,
-        helpers::{NETWORK_CONFIG_ID, SITE_CONFIG_ID},
+        helpers::{NETWORK_CONFIG_ID, NODE_CONFIG_ID},
     },
 };
 use hex;
@@ -169,12 +169,12 @@ impl ThisNodeRepo {
 
         let _region = sqlx::query!(
             "
-            UPDATE site_configs
+            UPDATE node_configs
             SET private_key_hex = ?
-            WHERE site_configs.id = ?
+            WHERE node_configs.id = ?
             ",
             private_key_hex,
-            SITE_CONFIG_ID
+            NODE_CONFIG_ID
         )
         .execute(&mut *connection)
         .await;
@@ -189,11 +189,11 @@ impl ThisNodeRepo {
             PrivateKeyRow,
             "
             SELECT private_key_hex
-            FROM site_configs
-            WHERE site_configs.id = ?
+            FROM node_configs
+            WHERE node_configs.id = ?
             LIMIT 1
             ",
-            SITE_CONFIG_ID
+            NODE_CONFIG_ID
         )
         .fetch_one(&mut *connection)
         .await

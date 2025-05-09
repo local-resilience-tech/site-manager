@@ -12,7 +12,7 @@ pub struct Site {
 #[serde(crate = "rocket::serde")]
 pub struct SiteConfig {
     pub id: String,
-    pub this_site_id: String,
+    pub this_node_id: String,
     pub name: String,
 }
 

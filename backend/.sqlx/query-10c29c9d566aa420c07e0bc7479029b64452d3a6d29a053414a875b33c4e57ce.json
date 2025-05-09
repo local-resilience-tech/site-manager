@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE node_configs\n            SET private_key_hex = ?\n            WHERE node_configs.id = ?\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "10c29c9d566aa420c07e0bc7479029b64452d3a6d29a053414a875b33c4e57ce"
+}

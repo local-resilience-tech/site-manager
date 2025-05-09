@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT sites.id as id, sites.name as name\n            FROM sites\n            INNER JOIN site_configs ON site_configs.this_site_id = sites.id\n            WHERE site_configs.id = ? LIMIT 1\n            ",
+  "query": "\n            SELECT nodes.id as id, nodes.name as name\n            FROM nodes\n            INNER JOIN node_configs ON node_configs.this_node_id = nodes.id\n            WHERE node_configs.id = ? LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "bfc701028d244384cc465476120e2103de3869a7b79fb2ee0a5e5508a180bb8f"
+  "hash": "2090ca1f135cee868b34544e78ba63c82422d1f7fbfc379744738ff7468d10c3"
 }
