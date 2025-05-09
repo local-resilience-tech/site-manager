@@ -11,7 +11,7 @@ export default function SetRegion({
   return (
     <VStack alignItems={"stretch"}>
       <Heading as="h1" size="2xl">
-        Welcome to Site Manager
+        Welcome to LoRes Mesh
       </Heading>
       <Text>
         In order to setup this Site, we need to connect you to a region.

@@ -16,7 +16,7 @@ export default function Navbar() {
         <Flex alignItems={"center"} justifyContent={"space-between"}>
           <Stack direction="row" alignItems="center">
             <Box>
-              <Link to="/">Site Manager</Link>{" "}
+              <Link to="/">LoRes Mesh</Link>{" "}
               <ExternalLink
                 variant="underline"
                 href={
