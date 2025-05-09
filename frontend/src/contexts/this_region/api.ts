@@ -1,7 +1,7 @@
 import { BaseApi } from "../shared"
 import { ApiResult } from "../shared/types"
-import { BootstrapPeer } from "../this_node"
-import { SiteDetails } from "../this_node"
+import { BootstrapPeer } from "../this_p2panda_node"
+import { NodeDetails } from "../this_node"
 import { RegionDetails } from "./types"
 
 export default class ThisRegionApi extends BaseApi {
@@ -9,8 +9,8 @@ export default class ThisRegionApi extends BaseApi {
     return this.apiCall("this_region")
   }
 
-  sites(): Promise<ApiResult<SiteDetails[], any>> {
-    return this.apiCall("this_region/sites")
+  nodes(): Promise<ApiResult<NodeDetails[], any>> {
+    return this.apiCall("this_region/nodes")
   }
 
   bootstrap(

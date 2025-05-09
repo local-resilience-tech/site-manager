@@ -28,21 +28,21 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisP2
         })
 }
 
-#[get("/sites", format = "json")]
-async fn sites() -> Result<Json<Vec<Node>>, ThisP2PandaNodeRepoError> {
+#[get("/nodes", format = "json")]
+async fn nodes() -> Result<Json<Vec<Node>>, ThisP2PandaNodeRepoError> {
     // create dummy data
-    let sites = vec![
+    let nodes = vec![
         Node {
             id: "1".to_string(),
-            name: "Site 1".to_string(),
+            name: "Node 1".to_string(),
         },
         Node {
             id: "2".to_string(),
-            name: "Site 2".to_string(),
+            name: "Node 2".to_string(),
         },
     ];
 
-    Ok(Json(sites))
+    Ok(Json(nodes))
 }
 
 #[post("/bootstrap", format = "json", data = "<data>")]
@@ -85,5 +85,5 @@ async fn bootstrap(
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![show, sites, bootstrap]
+    routes![show, nodes, bootstrap]
 }

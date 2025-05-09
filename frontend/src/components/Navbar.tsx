@@ -27,14 +27,14 @@ export default function Navbar() {
               </ExternalLink>
             </Box>
             <Box>
-              <Link to="/node">
+              <Link to="/p2panda_node">
                 <Button colorPalette="blue" variant="ghost">
                   P2Panda
                 </Button>
               </Link>
-              <Link to="/sites">
+              <Link to="/nodes">
                 <Button colorPalette="blue" variant="ghost">
-                  Sites
+                  Nodes
                 </Button>
               </Link>
               <Link to="/this_node">

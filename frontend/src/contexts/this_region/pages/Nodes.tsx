@@ -1,39 +1,39 @@
 import { Container, Heading, VStack } from "@chakra-ui/react"
 import { useContext, useEffect, useState } from "react"
 import { RegionContext } from "../provider_contexts"
-import SitesList from "../components/SitesList"
-import { SiteDetails } from "../../this_node"
+import NodesList from "../components/NodesList"
+import { NodeDetails } from "../../this_node"
 import ThisRegionApi from "../api"
 import { Loading, useLoading } from "../../shared"
 
 const api = new ThisRegionApi()
 
-const getSites = async (): Promise<SiteDetails[] | null> => {
-  const result = await api.sites()
+const getNodes = async (): Promise<NodeDetails[] | null> => {
+  const result = await api.nodes()
   if ("Ok" in result) return result.Ok
   return null
 }
 
-export default function Sites() {
+export default function Nodes() {
   const regionDetails = useContext(RegionContext)
 
   if (!regionDetails) {
     return <Container>No region</Container>
   }
 
-  const [sites, setSites] = useState<SiteDetails[] | null>(null)
+  const [nodes, setNodes] = useState<NodeDetails[] | null>(null)
   const [loading, withLoading] = useLoading(true)
 
-  const fetchSites = async () => {
+  const fetchNodes = async () => {
     withLoading(async () => {
-      const result = await getSites()
-      console.log("EFFECT: fetchSites", result)
-      setSites(result)
+      const result = await getNodes()
+      console.log("EFFECT: fetchNodes", result)
+      setNodes(result)
     })
   }
 
   useEffect(() => {
-    if (sites == null) fetchSites()
+    if (nodes == null) fetchNodes()
   }, [])
 
   if (loading) return <Loading />
@@ -45,9 +45,9 @@ export default function Sites() {
           {regionDetails.network_id}
         </Heading>
         <Heading as="h2" size="lg">
-          Sites
+          Nodes
         </Heading>
-        {sites && <SitesList sites={sites} />}
+        {nodes && <NodesList nodes={nodes} />}
       </VStack>
     </Container>
   )

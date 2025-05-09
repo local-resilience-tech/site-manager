@@ -1,7 +1,7 @@
 import { Table } from "@chakra-ui/react"
-import { SiteDetails } from "../../this_node"
+import { NodeDetails } from "../../this_node"
 
-export default function SitesList({ sites }: { sites: SiteDetails[] }) {
+export default function NodesList({ nodes: nodes }: { nodes: NodeDetails[] }) {
   return (
     <Table.Root variant="line">
       <Table.Header>
@@ -11,10 +11,10 @@ export default function SitesList({ sites }: { sites: SiteDetails[] }) {
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {sites.map((site) => (
-          <Table.Row key={site.id}>
-            <Table.Cell>{site.name}</Table.Cell>
-            <Table.Cell>{site.id}</Table.Cell>
+        {nodes.map((node) => (
+          <Table.Row key={node.id}>
+            <Table.Cell>{node.name}</Table.Cell>
+            <Table.Cell>{node.id}</Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

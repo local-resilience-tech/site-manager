@@ -5,7 +5,7 @@ import { ColorModeProvider } from "./components/ui/color-mode"
 import { themeSystem } from "./theme"
 import { EnsureNode } from "./contexts/this_node"
 import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
-import { EnsureRegion, Sites } from "./contexts/this_region"
+import { EnsureRegion, Nodes } from "./contexts/this_region"
 
 const router = createBrowserRouter(
   [
@@ -17,11 +17,11 @@ const router = createBrowserRouter(
           path: "",
           element: <EnsureRegion />,
           children: [
-            { path: "sites", element: <Sites /> },
+            { path: "nodes", element: <Nodes /> },
             { path: "this_node", element: <EnsureNode /> },
           ],
         },
-        { path: "node", element: <ThisP2PandaNode /> },
+        { path: "p2panda_node", element: <ThisP2PandaNode /> },
       ],
     },
   ],
